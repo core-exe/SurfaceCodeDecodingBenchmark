@@ -35,15 +35,9 @@ inline bool is_zy(Pauli p){
     return (p == Pauli::Z) || (p == Pauli::Y);
 }
 
-
-
 enum class Symptom{
     POSITIVE = 0,
     NEGATIVE = 1
 };
-
-
-std::string color_h_connect = std::string("\033[1;90m-\033[0m");
-std::string color_v_connect = std::string("\033[1;90m|\033[0m");
 
 }}

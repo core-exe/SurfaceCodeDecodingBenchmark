@@ -34,8 +34,7 @@ void RectangularScheme::add_data_error(RectangularIndex index, Util::Pauli pauli
     if(qubit_type(index) != Util::QubitType::DATA)
         throw Util::BadIndex(std::string("Requires index on data qubit."));
     data_error->mult_error(index, pauli);
-    if(Util::is_xy(pauli)) {
-        // change Z symptoms
+    if((Util::is_xy(pauli) && index.i() % 2 == 1) || (Util::is_zy(pauli) && index.i() % 2 == 0)) {
         auto new_index = index.i_move(-1);
         if(valid_index(new_index))
             syndrome->change_symptom(new_index);
@@ -43,8 +42,7 @@ void RectangularScheme::add_data_error(RectangularIndex index, Util::Pauli pauli
         if(valid_index(new_index))
             syndrome->change_symptom(new_index);
     }
-    if(Util::is_zy(pauli)) {
-        // change X symptoms
+    if((Util::is_zy(pauli) && index.i() % 2 == 1) || (Util::is_xy(pauli) && index.i() % 2 == 0)) {
         auto new_index = index.j_move(-1);
         if(valid_index(new_index))
             syndrome->change_symptom(new_index);
@@ -116,7 +114,7 @@ std::string RectangularScheme::to_string(bool color, int interval) const {
     std::string ret = std::string("");
     for(int i = 0; i < x; i++) {
         if(i != 0)
-            ret += Util::show_interval_v(color, interval);
+            ret += Util::show_interval_v(color, interval, y);
         for(int j = 0; j < y; j++) {
             auto index = RectangularIndex(i, j);
             if(j != 0)

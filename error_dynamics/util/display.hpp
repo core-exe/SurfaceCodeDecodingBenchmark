@@ -13,7 +13,7 @@ inline std::string to_string(bool color, Pauli p) {
         return color ? std::string("\033[1;33mX\033[0m") : std::string("X");
     if(p == Pauli::Y)
         return color ? std::string("\033[1;32mY\033[0m") : std::string("Y");
-    return color ? std::string("\033[1;34mY\033[0m") : std::string("Z");
+    return color ? std::string("\033[1;34mZ\033[0m") : std::string("Z");
 }
 
 inline std::string to_string(bool color, Symptom p) {
@@ -28,15 +28,15 @@ inline std::string show_interval_h(bool color, int interval) {
     auto str = std::string(2 * interval - 1, '-');
     str = " " + str + " ";
     if(color)
-        str = "\033[1;90m" + str + "\033[0m";
+        str = "\033[90m" + str + "\033[0m";
     return str;
 }
 
-inline std::string show_interval_v(bool color, int interval) {
+inline std::string show_interval_v(bool color, int interval, int y) {
     if(interval == 0)
         return std::string("");
     auto line = std::string("");
-    for(int i = 0; i < interval; i++) {
+    for(int i = 0; i < y; i++) {
         if(i != 0)
             line += std::string(2 * interval + 1, ' ');
         line += "|";
@@ -46,7 +46,7 @@ inline std::string show_interval_v(bool color, int interval) {
     for(int _ = 0; _ < interval; _++)
         str += line;
     if(color)
-        str = "\033[1;90m" + str + "\033[0m";
+        str = "\033[90m" + str + "\033[0m";
     return str;
 }
 
