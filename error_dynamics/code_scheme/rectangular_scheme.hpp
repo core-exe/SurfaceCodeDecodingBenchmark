@@ -16,10 +16,19 @@ class RectangularIndex {
     public:
     RectangularIndex() = delete;
     inline RectangularIndex(int __i, int __j) { _i = __i, _j = __j; }
-    inline const int& i() { return _i; }
-    inline const int& j() { return _j; }
-    inline RectangularIndex i_move(int d) { return RectangularIndex(_i + d, _j); }
-    inline RectangularIndex j_move(int d) { return RectangularIndex(_i, _j + d); }
+    inline const int& i() const { return _i; }
+    inline const int& j() const { return _j; }
+    inline RectangularIndex i_move(int d) const { return RectangularIndex(_i + d, _j); }
+    inline RectangularIndex j_move(int d) const { return RectangularIndex(_i, _j + d); }
+};
+
+class RectangularShape {
+    int _x, _y;
+    public:
+    RectangularShape() = delete;
+    inline RectangularShape(int __x, int __y) { _x = __x, _y = __y; }
+    inline const int& x() const { return _x; }
+    inline const int& y() const { return _y; }
 };
 
 class RectangularScheme;
@@ -63,6 +72,10 @@ class RectangularScheme {
             return Util::QubitType::MEASURE_Z;
         return Util::QubitType::MEASURE_X;
     }
+    inline const RectangularShape get_shape() const {
+        return RectangularShape(x, y);
+    }
+
     std::shared_ptr<RectangularSyndrome> get_syndrome() const;
     void add_data_error(RectangularIndex index, Util::Pauli pauli);
     void add_data_error(std::shared_ptr<RectangularError> _data_error);
@@ -89,15 +102,24 @@ class RectangularSyndrome {
     RectangularSyndrome(int _d);
     RectangularSyndrome(const RectangularSyndrome& other);
 
+    inline const RectangularShape get_shape() const {
+        return RectangularShape(x, y);
+    }
     inline Util::Symptom get_symptom(RectangularIndex index) const {
         return (Util::Symptom)list[index.i()][index.j()];
     }
     inline void change_symptom(RectangularIndex index) {
         list[index.i()][index.j()] = 1 - list[index.i()][index.j()];
     }
+    inline void change_symptom(RectangularIndex index, Util::Symptom symptom) {
+        if(symptom == Util::Symptom::NEGATIVE)
+            change_symptom(index);
+    }
     inline std::vector<std::vector<int>> to_vector() const {
         return std::vector<std::vector<int>>(list);
     }
+
+    std::string to_string(bool color = false, int interval = 1) const;
 };
 
 class RectangularError {
@@ -108,6 +130,9 @@ class RectangularError {
     RectangularError(int _x, int _y);
     RectangularError(int _d);
 
+    inline const RectangularShape get_shape() const {
+        return RectangularShape(x, y);
+    }
     inline void set_error(RectangularIndex index, Util::Pauli pauli) {
         list[index.i()][index.j()] = (int)pauli;
     }
@@ -126,5 +151,6 @@ using RectScheme = RectangularScheme;
 using RectSyndrome = RectangularSyndrome;
 using RectError = RectangularError;
 using RectIndex = RectangularIndex;
+using RectShape = RectangularShape;
 
 }}

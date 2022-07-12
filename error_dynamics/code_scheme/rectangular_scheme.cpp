@@ -113,18 +113,33 @@ bool RectangularScheme::is_correct() const {
 std::string RectangularScheme::to_string(bool color, int interval) const {
     std::string ret = std::string("");
     for(int i = 0; i < x; i++) {
-        if(i != 0)
-            ret += Util::show_interval_v(color, interval, y);
-        for(int j = 0; j < y; j++) {
-            auto index = RectangularIndex(i, j);
-            if(j != 0)
-                ret += Util::show_interval_h(color, interval);
-            if(qubit_type(index) == Util::QubitType::DATA)
-                ret += Util::to_string(color, data_error->get_error(index));
-            else
-                ret += Util::to_string(color, syndrome->get_symptom(index));
+        if(i != 0) {
+            std::string v_interval = std::string("");
+            for(int j = 0; j < y; j++) {
+                if(j != 0)
+                    v_interval += std::string(2 * interval + 1, ' ');
+                int data_i = ((i + j) % 2 == 0 ? i : i - 1);
+                Util::Pauli pauli = data_error->get_error(RectIndex(data_i, j));
+                bool error = (Util::is_xy(pauli) && data_i % 2 == 1) || (Util::is_zy(pauli) && data_i % 2 == 0);
+                v_interval += Util::show_interval_v(color, error);
+            }
+            v_interval += '\n';
+            for(int _ = 0; _ < interval; _++)
+                ret += v_interval;
         }
-        ret += "\n";
+        for(int j = 0; j < y; j++) {
+            if(j != 0) {
+                int data_j = ((i + j) % 2 == 0 ? j : j - 1);
+                Util::Pauli pauli = data_error->get_error(RectIndex(i, data_j));
+                bool error = (Util::is_zy(pauli) && i % 2 == 1) || (Util::is_xy(pauli) && i % 2 == 0);
+                ret += Util::show_interval_h(color, error, interval);
+            }
+            if((i + j) % 2 == 0) 
+                ret += Util::to_string(color, data_error->get_error(RectIndex(i, j)));
+            else
+                ret += Util::to_string(color, syndrome->get_symptom(RectIndex(i, j)));
+        }
+        ret += '\n';
     }
     return ret;
 }
@@ -140,6 +155,34 @@ RectangularSyndrome::RectangularSyndrome(const RectangularSyndrome& other) {
     x = other.x;
     y = other.y;
     list = other.list;
+}
+
+std::string RectangularSyndrome::to_string(bool color, int interval) const {
+    std::string ret = std::string("");
+    for(int i = 0; i < x; i++) {
+        if(i != 0) {
+            std::string v_interval = std::string("");
+            for(int j = 0; j < y; j++) {
+                if(j != 0)
+                    v_interval += std::string(2 * interval + 1, ' ');
+                v_interval += Util::show_interval_v(color, false);
+            }
+            v_interval += '\n';
+            for(int _ = 0; _ < interval; _++)
+                ret += v_interval;
+        }
+        for(int j = 0; j < y; j++) {
+            if(j != 0) {
+                ret += Util::show_interval_h(color, false, interval);
+            }
+            if((i + j) % 2 == 0) 
+                ret += '*';
+            else
+                ret += Util::to_string(color, get_symptom(RectIndex(i, j)));
+        }
+        ret += '\n';
+    }
+    return ret;
 }
 
 RectangularError::RectangularError(int _x, int _y) {

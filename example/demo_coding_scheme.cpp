@@ -8,9 +8,6 @@ using namespace ErrorDynamics;
 
 
 int main(){
-    for(int _ = 0; _ < 10; _++){
-        int x = 2;
-    }
     auto scheme = CodeScheme::RectScheme(7);
     cout << scheme.to_string(true, 2) << endl;
 
@@ -40,7 +37,6 @@ int main(){
         }
         cout << scheme.to_string(true, 2) << endl;
     }
-
 
     return 0;
 }
