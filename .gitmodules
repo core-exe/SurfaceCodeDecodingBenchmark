@@ -1,0 +1,3 @@
+[submodule "decoder/matching/Minimum-Cost-Perfect-Matching"]
+	path = decoder/matching/Minimum-Cost-Perfect-Matching
+	url = git@github.com:core-exe/Minimum-Cost-Perfect-Matching.git
