@@ -12,7 +12,6 @@ class RectangularSurfaceCode;
 
 namespace CodeScheme {
 
-
 class RectangularIndex {
     int _i, _j;
 
