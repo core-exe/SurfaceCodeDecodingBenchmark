@@ -7,6 +7,9 @@
 #include "util.hpp"
 
 namespace ErrorDynamics {
+
+class RectangularSurfaceCode;
+
 namespace CodeScheme {
 
 
@@ -29,6 +32,9 @@ class RectangularShape {
     inline RectangularShape(int __x, int __y) { _x = __x, _y = __y; }
     inline const int& x() const { return _x; }
     inline const int& y() const { return _y; }
+    inline bool operator==(const RectangularShape& other) const {
+        return _x == other._x && _y == other._y;
+    }
 };
 
 class RectangularScheme;
@@ -50,6 +56,8 @@ class RectangularScheme {
     |   |   |   |   |
     D - Z - D - Z - D
     */
+
+    friend RectangularSurfaceCode;
 
     int x, y;
     std::shared_ptr<RectangularSyndrome> syndrome, syndrome_error;
@@ -146,6 +154,18 @@ class RectangularError {
         return std::vector<std::vector<int>>(list);
     }
 };
+
+inline std::shared_ptr<RectangularSyndrome> operator^(std::shared_ptr<RectangularSyndrome> a, std::shared_ptr<RectangularSyndrome> b) {
+    if(!(a->get_shape() == b->get_shape()))
+        throw Util::BadShape(std::string("The two syndromes should have the same shape."));
+    auto ret = std::make_shared<RectangularSyndrome>(*a);
+    for(int i = 0; i < b->get_shape().x(); i++) {
+        for(int j = (i + 1) % 2; j < b->get_shape().y(); j += 2) {
+            ret->change_symptom(RectangularIndex(i, j), b->get_symptom(RectangularIndex(i, j)));
+        }
+    }
+    return ret;
+}
 
 using RectScheme = RectangularScheme;
 using RectSyndrome = RectangularSyndrome;
