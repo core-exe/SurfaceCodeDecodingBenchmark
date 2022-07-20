@@ -45,6 +45,10 @@ class RectangularSurfaceCode {
     inline const CodeScheme::RectShape get_shape() const {
         return CodeScheme::RectShape(x, y);
     }
+
+    inline std::string to_string(bool color = false, int interval = 1) const {
+        return scheme->to_string(color, interval);
+    }
 };
 
 using RectData = std::pair<std::shared_ptr<std::vector<std::shared_ptr<CodeScheme::RectSyndrome>>>, 

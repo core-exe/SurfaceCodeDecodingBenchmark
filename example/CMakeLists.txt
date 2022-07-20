@@ -3,3 +3,6 @@ target_link_libraries(demo_coding_scheme PUBLIC error_dynamics)
 
 add_executable(demo_error_model demo_error_model.cpp)
 target_link_libraries(demo_error_model PUBLIC error_dynamics)
+
+add_executable(demo_error_dynamics demo_error_dynamics.cpp)
+target_link_libraries(demo_error_dynamics PUBLIC error_dynamics)

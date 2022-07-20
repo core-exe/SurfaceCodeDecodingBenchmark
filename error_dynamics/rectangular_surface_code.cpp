@@ -13,7 +13,7 @@ RectangularSurfaceCode::RectangularSurfaceCode(int _x, int _y, std::shared_ptr<E
 
 RectangularSurfaceCode::RectangularSurfaceCode(int d, std::shared_ptr<ErrorModel::ErrorModelBase> _model) : RectangularSurfaceCode::RectangularSurfaceCode(d, d, _model) {}
 
-RectangularSurfaceCode::RectangularSurfaceCode(int _x, int _y, float p) : RectangularSurfaceCode::RectangularSurfaceCode(x, y, std::static_pointer_cast<ErrorModel::ErrorModelBase>(std::make_shared<ErrorModel::IIDError>(p))) {}
+RectangularSurfaceCode::RectangularSurfaceCode(int _x, int _y, float p) : RectangularSurfaceCode::RectangularSurfaceCode(_x, _y, std::static_pointer_cast<ErrorModel::ErrorModelBase>(std::make_shared<ErrorModel::IIDError>(p))) {}
 
 RectangularSurfaceCode::RectangularSurfaceCode(int d, float p) : RectangularSurfaceCode::RectangularSurfaceCode(d, d, p) {}
 
