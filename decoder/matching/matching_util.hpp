@@ -49,4 +49,10 @@ std::shared_ptr<SyndromeGraph> get_graph(
     const edge_distance_function& edge_distance_func_time
 );
 
+std::shared_ptr<ErrorDynamics::CodeScheme::RectangularError> matching_to_correction(
+    std::shared_ptr<SyndromeGraph> syndrome_graph,
+    ErrorDynamics::CodeScheme::RectShape shape,
+    const std::list<int>& matching
+);
+
 }

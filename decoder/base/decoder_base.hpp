@@ -7,9 +7,9 @@ namespace Decoder {
 
 class DecoderBase {
     public:
-    DecoderBase();
+    DecoderBase(){}
 
-    virtual std::shared_ptr<ErrorDynamics::CodeScheme::RectError> operator() (ErrorDynamics::RectData data, ErrorDynamics::CodeScheme::RectShape shape) = 0;
+    virtual std::shared_ptr<ErrorDynamics::CodeScheme::RectError> operator() (ErrorDynamics::RectData data) = 0;
 };
 
 

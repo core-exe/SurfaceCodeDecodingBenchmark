@@ -10,7 +10,7 @@ using namespace Decoder;
 
 int main() {
     int t_total = 1;
-    float p = 0.01;
+    double p = 0.01;
     auto code = RectangularSurfaceCode(7, p);
     code.step(t_total);
     auto data = code.get_data();

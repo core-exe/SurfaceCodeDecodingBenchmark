@@ -19,13 +19,14 @@ class RectangularSurfaceCode {
 
     public:
     RectangularSurfaceCode() = delete;
-    RectangularSurfaceCode(int d, float p);
-    RectangularSurfaceCode(int _x, int _y, float p);
+    RectangularSurfaceCode(int d, double p);
+    RectangularSurfaceCode(int _x, int _y, double p);
     RectangularSurfaceCode(int d, std::shared_ptr<ErrorModel::ErrorModelBase> _model);
     RectangularSurfaceCode(int _x, int _y, std::shared_ptr<ErrorModel::ErrorModelBase> _model);
 
     void reset();
     void step(int dt = 1);
+    void manual_step(std::shared_ptr<CodeScheme::RectError> data_error, std::shared_ptr<CodeScheme::RectSyndrome> syndrome_error);
     inline void apply_correction(std::shared_ptr<CodeScheme::RectError> correction) {
         scheme->add_data_error(correction);
     }

@@ -72,12 +72,53 @@ shared_ptr<SyndromeGraph> get_graph(
                             }
                         }
                     }
-
                 }
             }
         }
     }
     return syndrome_graph;
+}
+
+std::shared_ptr<ErrorDynamics::CodeScheme::RectangularError> matching_to_correction(
+    std::shared_ptr<SyndromeGraph> syndrome_graph,
+    ErrorDynamics::CodeScheme::RectShape shape,
+    const std::list<int>& matching
+) {
+    auto error = std::make_shared<ErrorDynamics::CodeScheme::RectangularError>(shape.x(), shape.y());
+    auto graph = syndrome_graph->graph;
+    auto idx_lookup = syndrome_graph->index_lookup;
+    for(auto it = matching.cbegin(); it != matching.cend(); it++) {
+        auto edge = graph.GetEdge(*it);
+        bool in_a = idx_lookup[edge.first].is_in();
+        bool in_b = idx_lookup[edge.second].is_in();
+        if(!(in_a || in_b))
+            continue;
+        int vertex_a, vertex_b;
+        if(!in_a) {
+            vertex_a = edge.second;
+            vertex_b = edge.first;
+        } else {
+            vertex_a = edge.first;
+            vertex_b = edge.second;
+        }
+        auto &idx_a = idx_lookup[vertex_a], &idx_b = idx_lookup[vertex_b];
+        if(idx_b.node_type == NodeType::ETX || idx_b.node_type == NodeType::ETZ) // ignore the measurement error
+            continue;
+        auto pauli = (ErrorDynamics::Util::Pauli)((idx_a.i() % 2 == 0) ? 1 : 3);
+        if(in_a && in_b) { // both excitement inside the qubit array
+            for(int i = idx_a.i(), delta = ((idx_b.i() - idx_a.i()) > 0 ? 1 : -1); i != idx_b.i(); i += (2 * delta))
+                error->mult_error(ErrorDynamics::CodeScheme::RectIndex(i + delta, idx_a.j()), pauli);
+            for(int j = idx_a.j(), delta = ((idx_b.j() - idx_a.j()) > 0 ? 1 : -1); j != idx_b.j(); j += (2 * delta))
+                error->mult_error(ErrorDynamics::CodeScheme::RectIndex(idx_b.i(), j + delta), pauli);
+        } else if(idx_a.i() % 2 == 1) {
+            for(int i = idx_a.i(), delta = (idx_b.direction == Direction::NEG ? -1 : 1); i >= 0 && i < shape.x(); i += (2 * delta))
+                error->mult_error(ErrorDynamics::CodeScheme::RectIndex(i + delta, idx_a.j()), pauli);
+        } else {
+            for(int j = idx_a.j(), delta = (idx_b.direction == Direction::NEG ? -1 : 1); j >= 0 && j < shape.y(); j += (2 * delta))
+                error->mult_error(ErrorDynamics::CodeScheme::RectIndex(idx_a.i(), j + delta), pauli);
+        }
+    }
+    return error;
 }
 
 

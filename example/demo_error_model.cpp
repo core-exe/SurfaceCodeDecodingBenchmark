@@ -9,7 +9,7 @@ using namespace ErrorDynamics;
 int main(){
     auto scheme = CodeScheme::RectScheme(11);
     cout << scheme.to_string(true, 1) << endl;
-    float p = 0.01;
+    double p = 0.01;
     auto error_model = ErrorModel::IIDError(p);
 
     int t = 0;

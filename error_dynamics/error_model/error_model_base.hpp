@@ -8,7 +8,7 @@
 namespace ErrorDynamics {
 namespace ErrorModel {
 
-class ErrorModelBase{
+class ErrorModelBase {
     public:
     ErrorModelBase(){}
     
