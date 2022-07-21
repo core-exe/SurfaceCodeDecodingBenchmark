@@ -1,3 +1,5 @@
+#pragma once
+
 #include "error_dynamics.hpp"
 #include <memory>
 

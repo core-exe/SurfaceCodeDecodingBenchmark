@@ -6,3 +6,6 @@ target_link_libraries(demo_error_model PUBLIC error_dynamics)
 
 add_executable(demo_error_dynamics demo_error_dynamics.cpp)
 target_link_libraries(demo_error_dynamics PUBLIC error_dynamics)
+
+add_executable(demo_syndrome_graph demo_syndrome_graph.cpp)
+target_link_libraries(demo_syndrome_graph PUBLIC error_dynamics decoder)
