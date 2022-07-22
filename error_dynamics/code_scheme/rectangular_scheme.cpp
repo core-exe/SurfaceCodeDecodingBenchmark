@@ -192,4 +192,14 @@ RectangularError::RectangularError(int _x, int _y) {
 
 RectangularError::RectangularError(int _d) : RectangularError::RectangularError(_d, _d) {}
 
+std::vector<int> RectangularError::count_errors() const {
+    auto ret = std::vector<int>(4, 0);
+    for(int i = 0; i < x; i++) {
+        for(int j = (i % 2); j < y; j++) {
+            ret[list[i][j]]++;
+        }
+    }
+    return ret;
+}
+
 }}

@@ -14,8 +14,19 @@ if (NOT CMAKE_BUILD_TYPE)
             Release RelWithDebInfo Debug)
 endif ()
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ADDITIONAL_CFLAGS} -g")
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ADDITIONAL_CFLAGS} -g")
+endif ()
+
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ADDITIONAL_CFLAGS} -O3")
+endif ()
+
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ADDITIONAL_CFLAGS} -fopenmp")
+
+find_package(OpenMP REQUIRED)
 
 add_subdirectory(error_dynamics)
 add_subdirectory(decoder)
 add_subdirectory(example)
+add_subdirectory(exec)

@@ -5,6 +5,7 @@
 #include <utility>
 #include <string>
 #include "util.hpp"
+#include "omp.h"
 
 namespace ErrorDynamics {
 
@@ -152,6 +153,8 @@ class RectangularError {
     inline std::vector<std::vector<int>> to_vector() const {
         return std::vector<std::vector<int>>(list);
     }
+
+    std::vector<int> count_errors() const;
 };
 
 inline std::shared_ptr<RectangularSyndrome> operator^(std::shared_ptr<RectangularSyndrome> a, std::shared_ptr<RectangularSyndrome> b) {

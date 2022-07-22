@@ -31,8 +31,8 @@ class RectangularSurfaceCode {
         scheme->add_data_error(correction);
     }
     
-    bool is_valid() const;
-    bool is_correct() const;
+    inline bool is_valid() const { return scheme->is_valid(); }
+    bool is_correct() const { return scheme->is_correct(); }
 
     inline std::pair<std::shared_ptr<std::vector<std::shared_ptr<CodeScheme::RectSyndrome>>>, 
     std::shared_ptr<CodeScheme::RectError>> get_data() const {
@@ -49,6 +49,10 @@ class RectangularSurfaceCode {
 
     inline std::string to_string(bool color = false, int interval = 1) const {
         return scheme->to_string(color, interval);
+    }
+
+    inline std::vector<int> count_errors() const {
+        return last_error->count_errors();
     }
 };
 
