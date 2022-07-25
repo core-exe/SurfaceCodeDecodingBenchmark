@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.19)
 project(surface_code_decoding_benchmark)
 
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )

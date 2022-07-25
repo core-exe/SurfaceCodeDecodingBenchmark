@@ -1,1 +1,1 @@
-add_subdirectory(MWPE_2d)
+add_subdirectory(MWPM_2d)

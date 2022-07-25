@@ -34,7 +34,7 @@ using distance_function = std::function<std::pair<bool, double>(RectIndex3d, Rec
 using edge_distance_function = std::function<std::pair<int, double>(RectIndex3d)>;
 
 struct SyndromeGraph {
-    MWPE::Graph graph;
+    MWPM::Graph graph;
     std::vector<RectIndex3d> index_lookup;
     std::vector<double> weight;
     inline SyndromeGraph(): graph(), index_lookup(), weight() {}

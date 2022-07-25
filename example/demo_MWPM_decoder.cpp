@@ -24,7 +24,7 @@ int main() {
         code.manual_step(d_error, m_error);
     }
 
-    auto decoder = Dc::Matching::StandardMWPEDecoder(p, p, p, 0, false, code.get_shape());
+    auto decoder = Dc::Matching::StandardMWPMDecoder(p, p, p, 0, false, code.get_shape());
     auto data = code.get_data();
     cout << "Error: " << endl;
     cout << code.to_string(true, 1) << endl << endl;

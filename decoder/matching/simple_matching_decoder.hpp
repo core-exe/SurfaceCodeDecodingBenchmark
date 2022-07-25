@@ -23,11 +23,11 @@ class SimpleMatchingDecoder: public DecoderBase {
     std::shared_ptr<ErrorDynamics::CodeScheme::RectError> operator() (ErrorDynamics::RectData data);
 };
 
-class StandardMWPEDecoder: public SimpleMatchingDecoder {
+class StandardMWPMDecoder: public SimpleMatchingDecoder {
     public:
-    StandardMWPEDecoder() = delete;
-    StandardMWPEDecoder(double px, double py, double pz, double pm, bool measurement_error, ErrorDynamics::CodeScheme::RectShape _shape);
-    StandardMWPEDecoder(double p, bool measurement_error, ErrorDynamics::CodeScheme::RectShape _shape);
+    StandardMWPMDecoder() = delete;
+    StandardMWPMDecoder(double px, double py, double pz, double pm, bool measurement_error, ErrorDynamics::CodeScheme::RectShape _shape);
+    StandardMWPMDecoder(double p, bool measurement_error, ErrorDynamics::CodeScheme::RectShape _shape);
 
     std::pair<bool, double> distance_function(RectIndex3d idx_a, RectIndex3d idx_b);
     std::pair<bool, double> edge_distance_function_space(RectIndex3d idx);

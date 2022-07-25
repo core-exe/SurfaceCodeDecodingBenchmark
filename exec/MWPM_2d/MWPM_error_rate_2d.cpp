@@ -33,7 +33,7 @@ vector<int> test_batch(int d, double p_eff, int mode = 0) {
         error_model = static_pointer_cast<Err::ErrorModel::ErrorModelBase>(make_shared<Err::ErrorModel::IIDError>(p_independent,  pow(p_independent, 2.0), p_independent, 0));
     }
     auto code = Err::RectangularSurfaceCode(d, error_model);
-    auto decoder = Dc::Matching::StandardMWPEDecoder(p_eff, p_eff, p_eff, 0, false, code.get_shape());
+    auto decoder = Dc::Matching::StandardMWPMDecoder(p_eff, p_eff, p_eff, 0, false, code.get_shape());
     
     for(int _ = 0; _ < BATCH_SIZE; _++) {
         code.step(1);
@@ -78,18 +78,18 @@ int main() {
     p     | T      | p_L 
     0.01  | 59.5s  | 0.0032
     0.02  | 217s   | 0.2379
-    0.03  | 416s   | 0.6294
+    0.03  | 416s   | 0.6294M
     0.04  | 595s   | 0.7359
     0.05  | 722s   | 0.7415
     */
 
 
-    auto path = std::filesystem::path(PROJECT_ROOT_PATH) / "exec/MWPE_2d/out/";
+    auto path = std::filesystem::path(PROJECT_ROOT_PATH) / "exec/MWPM_2d/out/";
     string file_name;
     if(mode == 0) {
-        file_name = "MWPE_2d_out_balance.txt";
+        file_name = "MWPM_2d_out_balance.txt";
     } else if(mode == 1) {
-        file_name = "MWPE_2d_out_independent.txt";
+        file_name = "MWPM_2d_out_independent.txt";
     }
     ofstream file;
     file.open(path.append(file_name));
