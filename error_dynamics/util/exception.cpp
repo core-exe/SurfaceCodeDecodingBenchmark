@@ -9,6 +9,7 @@ BadShape::BadShape(std::string _info){
 
 BadShape& BadShape::operator=(const BadShape& other){
     info = other.info;
+    return *this;
 }
 
 const char* BadShape::what() const noexcept{
@@ -21,6 +22,7 @@ BadType::BadType(std::string _info){
 
 BadType& BadType::operator=(const BadType& other){
     info = other.info;
+    return *this;
 }
 
 const char* BadType::what() const noexcept{
@@ -33,6 +35,7 @@ BadIndex::BadIndex(std::string _info){
 
 BadIndex& BadIndex::operator=(const BadIndex& other){
     info = other.info;
+    return *this;
 }
 
 const char* BadIndex::what() const noexcept{

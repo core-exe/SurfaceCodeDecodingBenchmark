@@ -7,6 +7,7 @@
 #include <chrono>
 #include <utility>
 #include <fstream>
+#include <filesystem>
 #include <omp.h>
 
 #define NUM_THREAD 50
@@ -16,13 +17,21 @@ using namespace std;
 namespace Err = ErrorDynamics;
 namespace Dc = Decoder;
 
-vector<int> test_batch(int d, double p_eff) {
+vector<int> test_batch(int d, double p_eff, int mode = 0) {
     /*
     returned array:
     logical errors, # Y-error when logical error, # error when logical error,
+    mode = 0: balanced error
+    mode = 1: independent X/Z error
     */
     auto ret = vector<int>(3, 0);
-    auto error_model = static_pointer_cast<Err::ErrorModel::ErrorModelBase>(make_shared<Err::ErrorModel::IIDError>(p_eff / 3, p_eff / 3, p_eff / 3, 0));
+    shared_ptr<Err::ErrorModel::ErrorModelBase> error_model;
+    if(mode == 0)
+        error_model = static_pointer_cast<Err::ErrorModel::ErrorModelBase>(make_shared<Err::ErrorModel::IIDError>(p_eff / 3, p_eff / 3, p_eff / 3, 0));
+    else if(mode == 1) {
+        double p_independent = sqrt(1 + p_eff) - 1;
+        error_model = static_pointer_cast<Err::ErrorModel::ErrorModelBase>(make_shared<Err::ErrorModel::IIDError>(p_independent,  pow(p_independent, 2.0), p_independent, 0));
+    }
     auto code = Err::RectangularSurfaceCode(d, error_model);
     auto decoder = Dc::Matching::StandardMWPEDecoder(p_eff, p_eff, p_eff, 0, false, code.get_shape());
     
@@ -53,6 +62,7 @@ const vector<double> p_list = vector<double>({
     0.032, 0.034, 0.036, 0.038, 0.040,
     0.042, 0.044, 0.046, 0.048, 0.050
 });
+const int mode = 1;
 
 int main() {
     /*
@@ -73,16 +83,46 @@ int main() {
     0.05  | 722s   | 0.7415
     */
 
-    ofstream file;
-    file.open("MWPE_2d_out.txt");
 
-    const int repeat = 1000000 / BATCH_SIZE;
+    auto path = std::filesystem::path(PROJECT_ROOT_PATH) / "exec/MWPE_2d/out/";
+    string file_name;
+    if(mode == 0) {
+        file_name = "MWPE_2d_out_balance.txt";
+    } else if(mode == 1) {
+        file_name = "MWPE_2d_out_independent.txt";
+    }
+    ofstream file;
+    file.open(path.append(file_name));
+
+    int N = 1000000;
+    file << "N" << endl;
+    file << N << endl;
+
+    file << "d" << endl;
+    for(auto d_it = d_list.begin(); d_it != d_list.end(); d_it++) {
+        file << *d_it << " ";
+    }
+    file << "\n";
+
+    file << "p" << endl;
+    for(auto p_it = p_list.begin(); p_it != p_list.end(); p_it++) {
+        file << *p_it << " ";
+    }
+    file << "\n";
+
+    if(mode == 0) {
+        file << "balance" << endl;
+    } else if(mode == 1) {
+        file << "independent" << endl;
+    }
+    
+    const int repeat = N / BATCH_SIZE;
     for(auto d_it = d_list.begin(); d_it != d_list.end(); d_it++) {
         for(auto p_it = p_list.begin(); p_it != p_list.end(); p_it++) {
             vector<int> result = vector<int>(3, 0);
             #pragma omp parallel for shared(d_it, p_it, result) num_threads(NUM_THREAD)
             for(int _ = 0; _ < repeat; _++) {
-                auto batch_result = test_batch(*d_it, 1.0 - pow(1.0 - (*p_it), 8.0));
+                auto batch_result = test_batch(*d_it, 1.0 - pow(1.0 - (*p_it), 8.0), mode);
                 result[0] += batch_result[0];
                 result[1] += batch_result[1];
                 result[2] += batch_result[2];
