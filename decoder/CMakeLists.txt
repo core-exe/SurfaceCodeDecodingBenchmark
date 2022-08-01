@@ -1,5 +1,6 @@
 add_subdirectory(base)
 add_subdirectory(matching)
+add_subdirectory(machine_learning)
 
 add_library(decoder STATIC
     decoder.cpp
