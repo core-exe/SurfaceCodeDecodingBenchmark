@@ -36,7 +36,12 @@ class RectangularSurfaceCode {
 
     inline std::pair<std::shared_ptr<std::vector<std::shared_ptr<CodeScheme::RectSyndrome>>>, 
     std::shared_ptr<CodeScheme::RectError>> get_data() const {
-        return std::make_pair(syndrome_change_list, last_error);
+        using namespace std;
+        auto syndrome_list = make_shared<vector<shared_ptr<CodeScheme::RectSyndrome>>>(0);
+        for(auto it = syndrome_change_list->begin(); it != syndrome_change_list->end(); it++) {
+            syndrome_list->push_back(make_shared<CodeScheme::RectangularSyndrome>(*(*it)));
+        }
+        return std::make_pair(syndrome_list, make_shared<CodeScheme::RectError>(*last_error));
     }
 
     std::shared_ptr<CodeScheme::RectSyndrome> get_syndrome() const {
@@ -58,5 +63,4 @@ class RectangularSurfaceCode {
 
 using RectData = std::pair<std::shared_ptr<std::vector<std::shared_ptr<CodeScheme::RectSyndrome>>>, 
     std::shared_ptr<CodeScheme::RectError>>;
-
 }

@@ -146,7 +146,7 @@ std::string RectangularScheme::to_string(bool color, int interval) const {
 
 RectangularSyndrome::RectangularSyndrome(int _x, int _y) {
     x = _x, y = _y;
-    list = std::vector<std::vector<int>>(x, std::vector<int>(y, 0));
+    list = std::vector<int>(x * y, 0);
 }
 
 RectangularSyndrome::RectangularSyndrome(int _d) : RectangularSyndrome::RectangularSyndrome(_d, _d) {}
@@ -187,19 +187,69 @@ std::string RectangularSyndrome::to_string(bool color, int interval) const {
 
 RectangularError::RectangularError(int _x, int _y) {
     x = _x, y = _y;
-    list = std::vector<std::vector<int>>(x, std::vector<int>(y, 0));
+    list = std::vector<int>(x * y, 0);
 }
 
 RectangularError::RectangularError(int _d) : RectangularError::RectangularError(_d, _d) {}
+
+RectangularError::RectangularError(const RectangularError& other) {
+    x = other.x;
+    y = other.y;
+    list = other.list;
+}
 
 std::vector<int> RectangularError::count_errors() const {
     auto ret = std::vector<int>(4, 0);
     for(int i = 0; i < x; i++) {
         for(int j = (i % 2); j < y; j++) {
-            ret[list[i][j]]++;
+            ret[list[i * y + j]]++;
         }
     }
     return ret;
+}
+
+bool RectangularError::is_valid() const {
+    // measure-Z
+    for(int i = 0; i < x; i += 2) {
+        for(int j = 1; j < y; j += 2) {
+            int cnt = 0;
+            cnt += ((i - 1 >= 0 && Util::is_xy((Util::Pauli)list[(i - 1) * y + j])) ? 1 : 0);
+            cnt += ((i + 1 <  x && Util::is_xy((Util::Pauli)list[(i + 1) * y + j])) ? 1 : 0);
+            cnt += ((Util::is_xy((Util::Pauli)list[i * y + j - 1])) ? 1 : 0);
+            cnt += ((Util::is_xy((Util::Pauli)list[i * y + j + 1])) ? 1 : 0);
+            if(cnt % 2 == 1)
+                return false;
+        }
+    }
+    // measure-X
+    for(int i = 1; i < x; i += 2) {
+        for(int j = 0; j < y; j += 2) {
+            int cnt = 0;
+            cnt += ((Util::is_zy((Util::Pauli)list[(i - 1) * y + j])) ? 1 : 0);
+            cnt += ((Util::is_zy((Util::Pauli)list[(i + 1) * y + j])) ? 1 : 0);
+            cnt += ((j - 1 >= 0 && Util::is_zy((Util::Pauli)list[i * y + j - 1])) ? 1 : 0);
+            cnt += ((j + 1 <  y && Util::is_zy((Util::Pauli)list[i * y + j + 1])) ? 1 : 0);
+            if(cnt % 2 == 1)
+                return false;
+        }
+    }
+    return true;
+}
+
+bool RectangularError::is_correct() const {
+    int cnt = 0;
+    for(int i = 0; i < x; i += 2) {
+        cnt += (Util::is_xy((Util::Pauli)list[i * y]) ? 1 : 0);
+    }
+    if(cnt % 2 == 1)
+        return false;
+    cnt = 0;
+    for(int j = 0; j < y; j += 2) {
+        cnt += (Util::is_zy((Util::Pauli)list[j]) ? 1 : 0);
+    }
+    if(cnt % 2 == 1)
+        return false;
+    return true;
 }
 
 }}

@@ -103,7 +103,7 @@ class RectangularScheme {
 
 class RectangularSyndrome {
     int x, y;
-    std::vector<std::vector<int>> list;
+    std::vector<int> list;
     public:
     RectangularSyndrome() = delete;
     RectangularSyndrome(int _x, int _y);
@@ -114,17 +114,17 @@ class RectangularSyndrome {
         return RectangularShape(x, y);
     }
     inline Util::Symptom get_symptom(RectangularIndex index) const {
-        return (Util::Symptom)list[index.i()][index.j()];
+        return (Util::Symptom)list[index.i() * y + index.j()];
     }
     inline void change_symptom(RectangularIndex index) {
-        list[index.i()][index.j()] = 1 - list[index.i()][index.j()];
+        list[index.i() * y + index.j()] = 1 - list[index.i() * y + index.j()];
     }
     inline void change_symptom(RectangularIndex index, Util::Symptom symptom) {
         if(symptom == Util::Symptom::NEGATIVE)
             change_symptom(index);
     }
-    inline std::vector<std::vector<int>> to_vector() const {
-        return std::vector<std::vector<int>>(list);
+    inline std::vector<int> to_vector() const {
+        return std::vector<int>(list);
     }
 
     std::string to_string(bool color = false, int interval = 1) const;
@@ -132,29 +132,36 @@ class RectangularSyndrome {
 
 class RectangularError {
     int x, y;
-    std::vector<std::vector<int>> list;
+    std::vector<int> list;
     public:
     RectangularError() = delete;
     RectangularError(int _x, int _y);
     RectangularError(int _d);
+    RectangularError(const RectangularError& other);
 
     inline const RectangularShape get_shape() const {
         return RectangularShape(x, y);
     }
     inline void set_error(RectangularIndex index, Util::Pauli pauli) {
-        list[index.i()][index.j()] = (int)pauli;
+        list[index.i() * y + index.j()] = (int)pauli;
     }
     inline void mult_error(RectangularIndex index, Util::Pauli pauli) {
-        list[index.i()][index.j()] = (int)(pauli * (Util::Pauli)list[index.i()][index.j()]);
+        list[index.i() * y + index.j()] = (int)(pauli * (Util::Pauli)list[index.i() * y + index.j()]);
     }
     inline Util::Pauli get_error(RectangularIndex index) const {
-        return (Util::Pauli)list[index.i()][index.j()];
+        return (Util::Pauli)list[index.i() * y + index.j()];
     }
-    inline std::vector<std::vector<int>> to_vector() const {
-        return std::vector<std::vector<int>>(list);
+    inline std::vector<int> to_vector() const {
+        return std::vector<int>(list);
     }
 
     std::vector<int> count_errors() const;
+
+    // return true if all the symptoms are POSITIVE
+    bool is_valid() const;
+
+    // return true if no logical error happened.
+    bool is_correct() const;
 };
 
 inline std::shared_ptr<RectangularSyndrome> operator^(std::shared_ptr<RectangularSyndrome> a, std::shared_ptr<RectangularSyndrome> b) {
@@ -164,6 +171,18 @@ inline std::shared_ptr<RectangularSyndrome> operator^(std::shared_ptr<Rectangula
     for(int i = 0; i < b->get_shape().x(); i++) {
         for(int j = (i + 1) % 2; j < b->get_shape().y(); j += 2) {
             ret->change_symptom(RectangularIndex(i, j), b->get_symptom(RectangularIndex(i, j)));
+        }
+    }
+    return ret;
+}
+
+inline std::shared_ptr<RectangularError> operator*(std::shared_ptr<RectangularError> a, std::shared_ptr<RectangularError> b) {
+    if(!(a->get_shape() == b->get_shape()))
+        throw Util::BadShape(std::string("The two syndromes should have the same shape."));
+    auto ret = std::make_shared<RectangularError>(*a);
+    for(int i = 0; i < b->get_shape().x(); i++) {
+        for(int j = (i % 2); j < b->get_shape().y(); j++) {
+            ret->mult_error(RectangularIndex(i, j), b->get_error(RectangularIndex(i, j)));
         }
     }
     return ret;
