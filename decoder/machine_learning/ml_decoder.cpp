@@ -1,9 +1,10 @@
 #include <pybind11/embed.h>
+#include <pybind11/numpy.h>
 #include "ml_decoder.hpp"
 #include <vector>
+#include <string>
 
 namespace py = pybind11;
-
 
 namespace Decoder::ML {
 
@@ -13,7 +14,7 @@ MLDecoder::MLDecoder(std::string submodule_name) {
     module = py::module::import(("deep_decoder." + submodule_name).c_str());
 }
 
-std::pair<PyBuffer, PyBuffer> MLDecoder::to_pybuffer(std::vector<ErrorDynamics::RectData> datas){
+std::pair<py::array_t<int>, py::array_t<int>> MLDecoder::to_pyarray(std::vector<ErrorDynamics::RectData> datas){
     int batch_size = datas.size();
     int length = datas[0].first->size();
     auto shape = datas[0].second->get_shape();
@@ -44,8 +45,8 @@ std::pair<PyBuffer, PyBuffer> MLDecoder::to_pybuffer(std::vector<ErrorDynamics::
         sizeof(int)
     };
 
-    std::shared_ptr<void> data = std::make_shared<int[]>(new int[batch_size * length * shape.x() * shape.y()]);
-    std::shared_ptr<void> target = std::make_shared<int[]>(new int[batch_size * shape.x() * shape.y()]);
+    std::shared_ptr<int[]> data(new int[batch_size * length * shape.x() * shape.y()]);
+    std::shared_ptr<int[]> target(new int[batch_size * shape.x() * shape.y()]);
 
     int batch_counter = 0;
     for(auto it_batch = datas.begin(); it_batch != datas.end(); batch_counter++, it_batch++) {
@@ -56,23 +57,64 @@ std::pair<PyBuffer, PyBuffer> MLDecoder::to_pybuffer(std::vector<ErrorDynamics::
     }
 
     return std::make_pair(
-        PyBuffer(
-            data,
+        py::array_t<int>(py::buffer_info(
+            data.get(),
             sizeof(int),
             py::format_descriptor<int>::format(),
             4,
             shape_data,
             stride_data
-        ),
-        PyBuffer(
-            target,
+        )),
+        py::array_t<int>(py::buffer_info(
+            target.get(),
             sizeof(int),
             py::format_descriptor<int>::format(),
             3,
             shape_target,
             stride_target
-        )
+        ))
     );
+}
+
+void MLDecoder::add_train_data(std::pair<py::array_t<int>, py::array_t<int>> train_data) {
+    module.attr("receive_train_data")(train_data);
+}
+
+void MLDecoder::add_valid_data(std::pair<py::array_t<int>, py::array_t<int>> valid_data) {
+    module.attr("receive_valid_data")(valid_data);
+}
+
+void MLDecoder::add_test_data(std::pair<py::array_t<int>, py::array_t<int>> test_data) {
+    module.attr("receive_test_data")(test_data);
+}
+
+void MLDecoder::init() {
+    module.attr("init_dataset")();
+}
+
+void MLDecoder::train() {
+    module.attr("begin_training")();
+}
+
+void MLDecoder::load_model(std::string path) {
+    module.attr("attach_model")(path);
+}
+
+std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::RectError>> MLDecoder::operator()(std::vector<ErrorDynamics::RectData> datas) {
+    auto query = MLDecoder::to_pyarray(datas);
+    auto ret = py::array_t<int>(module.attr("query_data")(query.first));
+    int batch_size = ret.shape(0);
+    int x = ret.shape(1);
+    int y = ret.shape(2);
+
+    auto corrections = std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::RectError>>(0);
+    for(int b = 0; b < batch_size; b++) {
+        auto list = std::vector<int>(x * y);
+        std::memcpy(list.data(), ret.data() + b * x * y, x * y * sizeof(int));
+        corrections.push_back(std::make_shared<ErrorDynamics::CodeScheme::RectError>(x, y, list));
+    }
+
+    return corrections;
 }
 
 }

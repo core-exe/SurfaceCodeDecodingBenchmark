@@ -10,6 +10,7 @@ add_library(decoder STATIC
 target_link_libraries(decoder PUBLIC
     decoder_base
     matching_decoder
+    machine_learning_decoder
 )
 
 target_include_directories(decoder PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

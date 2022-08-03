@@ -19,6 +19,7 @@ std::vector<ErrorDynamics::RectData> BatchDecoder::generate_batch(std::shared_pt
         code->step(step);
         auto data = code->get_data();
         batch_data.push_back(data);
+        code->reset();
     }
     return batch_data;
 }

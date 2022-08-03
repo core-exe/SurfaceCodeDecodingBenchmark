@@ -3,6 +3,7 @@
 #include <utility>
 #include <string>
 #include <pybind11/embed.h>
+#include <pybind11/numpy.h>
 
 namespace Decoder::ML {
 
@@ -28,14 +29,17 @@ class MLDecoder: public BatchDecoder {
     public:
     MLDecoder(std::string submodule_name);
     
-    static std::pair<PyBuffer, PyBuffer> to_pybuffer(std::vector<ErrorDynamics::RectData> datas);
-    void add_train_data(std::pair<PyBuffer, PyBuffer> train_data);
-    void add_valid_data(std::pair<PyBuffer, PyBuffer> valid_data);
-    void add_test_data(std::pair<PyBuffer, PyBuffer> test_data);
+    static std::pair<pybind11::array_t<int>, pybind11::array_t<int>> to_pyarray(std::vector<ErrorDynamics::RectData> datas);
+
+    void add_train_data(std::pair<pybind11::array_t<int>, pybind11::array_t<int>> train_data);
+    void add_valid_data(std::pair<pybind11::array_t<int>, pybind11::array_t<int>> valid_data);
+    void add_test_data(std::pair<pybind11::array_t<int>, pybind11::array_t<int>> test_data);
 
     void init();
     void train();
-    void load_model();
+    void load_model(std::string path);
+
+    std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::RectError>> operator()(std::vector<ErrorDynamics::RectData> datas);
 };
 
 }

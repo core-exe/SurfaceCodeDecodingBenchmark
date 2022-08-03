@@ -136,6 +136,7 @@ class RectangularError {
     public:
     RectangularError() = delete;
     RectangularError(int _x, int _y);
+    RectangularError(int _x, int _y, std::vector<int> _list);
     RectangularError(int _d);
     RectangularError(const RectangularError& other);
 

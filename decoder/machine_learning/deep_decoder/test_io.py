@@ -1,19 +1,23 @@
 import numpy as np
+from typing import Tuple
 
 n_train = 0
 n_valid = 0
 n_test = 0
 
-def receive_train_data(data: np.ndarray):
-    print("Received train data of shape: {}".format(data.shape))
+def receive_train_data(data: Tuple[np.ndarray, np.ndarray]):
+    global n_train
+    print("Received train data of shape: {}, {}".format(data[0].shape, data[1].shape))
     n_train += 1
 
-def receive_valid_data(data: np.ndarray):
-    print("Received valid data of shape: {}".format(data.shape))
+def receive_valid_data(data: Tuple[np.ndarray, np.ndarray]):
+    global n_valid
+    print("Received valid data of shape: {}, {}".format(data[0].shape, data[1].shape))
     n_valid += 1
 
-def receive_test_data(data: np.ndarray):
-    print("Received test data of shape: {}".format(data.shape))
+def receive_test_data(data: Tuple[np.ndarray, np.ndarray]):
+    global n_test
+    print("Received test data of shape: {}, {}".format(data[0].shape, data[1].shape))
     n_test += 1
 
 def init_dataset():
@@ -27,3 +31,5 @@ def attach_model(path: str):
 
 def query_data(data: np.ndarray):
     print("Query data of shape: {}".format(data.shape))
+    b, t, x, y = data.shape
+    return np.zeros((b, x, y), dtype=np.int32)

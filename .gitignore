@@ -4,3 +4,4 @@
 
 out/
 ignore/
+__pycache__
