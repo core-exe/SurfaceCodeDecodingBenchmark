@@ -18,6 +18,8 @@ def receive_valid_data(data: Tuple[np.ndarray, np.ndarray]):
 def receive_test_data(data: Tuple[np.ndarray, np.ndarray]):
     global n_test
     print("Received test data of shape: {}, {}".format(data[0].shape, data[1].shape))
+    print(data[0])
+    print(data[1])
     n_test += 1
 
 def init_dataset():

@@ -5,7 +5,6 @@
 #include <utility>
 #include <string>
 #include "util.hpp"
-#include "omp.h"
 
 namespace ErrorDynamics {
 
@@ -163,6 +162,7 @@ class RectangularError {
 
     // return true if no logical error happened.
     bool is_correct() const;
+    Util::Pauli logical_error() const;    
 };
 
 inline std::shared_ptr<RectangularSyndrome> operator^(std::shared_ptr<RectangularSyndrome> a, std::shared_ptr<RectangularSyndrome> b) {

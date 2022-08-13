@@ -242,19 +242,24 @@ bool RectangularError::is_valid() const {
 }
 
 bool RectangularError::is_correct() const {
+    return logical_error() == Util::Pauli::I;
+}
+
+Util::Pauli RectangularError::logical_error() const {
+    auto logical_err = Util::Pauli::I;
     int cnt = 0;
     for(int i = 0; i < x; i += 2) {
         cnt += (Util::is_xy((Util::Pauli)list[i * y]) ? 1 : 0);
     }
     if(cnt % 2 == 1)
-        return false;
+        logical_err = logical_err * Util::Pauli::X;
     cnt = 0;
     for(int j = 0; j < y; j += 2) {
         cnt += (Util::is_zy((Util::Pauli)list[j]) ? 1 : 0);
     }
     if(cnt % 2 == 1)
-        return false;
-    return true;
+        logical_err = logical_err * Util::Pauli::Z;
+    return logical_err;
 }
 
 }}

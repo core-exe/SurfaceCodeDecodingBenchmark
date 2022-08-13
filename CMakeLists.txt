@@ -22,7 +22,7 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ADDITIONAL_CFLAGS} -O3")
 endif ()
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ADDITIONAL_CFLAGS} -fopenmp")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ADDITIONAL_CFLAGS} -fopenmp -fvisibility=hidden")
 
 find_package(OpenMP REQUIRED)
 

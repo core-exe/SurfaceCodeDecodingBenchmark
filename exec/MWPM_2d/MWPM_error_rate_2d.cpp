@@ -42,7 +42,8 @@ vector<int> test_batch(int d, double p_eff, int mode = 0) {
         auto stat = data.second->count_errors();
         
         code.apply_correction(correction);
-        if(!code.is_correct()) {
+        auto corrected = data.second * correction;
+        if(!corrected->is_correct()) {
             ret[0]++;
             ret[1] += stat[2];
             ret[2] += (stat[1] + stat[2] + stat[3]);
@@ -87,9 +88,9 @@ int main() {
     auto path = std::filesystem::path(PROJECT_ROOT_PATH) / "exec/MWPM_2d/out/";
     string file_name;
     if(mode == 0) {
-        file_name = "MWPM_2d_out_balance.txt";
+        file_name = "MWPM_2d_out_balance_.txt";
     } else if(mode == 1) {
-        file_name = "MWPM_2d_out_independent.txt";
+        file_name = "MWPM_2d_out_independent_.txt";
     }
     ofstream file;
     file.open(path.append(file_name));
