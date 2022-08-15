@@ -29,6 +29,7 @@ find_package(OpenMP REQUIRED)
 add_definitions(-DPROJECT_ROOT_PATH="${CMAKE_SOURCE_DIR}")
 
 add_subdirectory(external/pybind11)
+add_subdirectory(deep_decoder_util)
 add_subdirectory(error_dynamics)
 add_subdirectory(decoder)
 add_subdirectory(example)

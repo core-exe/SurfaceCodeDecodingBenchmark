@@ -1,0 +1,117 @@
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/numpy.h>
+#include <vector>
+#include "utility.hpp"
+#include "error_dynamics.hpp"
+#include <memory>
+
+namespace py = pybind11;
+namespace Err = ErrorDynamics;
+
+py::array_t<int> get_logical_error(
+    py::array_t<int, py::array::forcecast | py::array::c_style> &physical_errors
+) {
+    // physical_errors: shape (B, X, Y)
+
+    ssize_t batch_size = physical_errors.shape(0);
+    ssize_t x = physical_errors.shape(1);
+    ssize_t y = physical_errors.shape(2);
+    auto phy_err_acc = physical_errors.unchecked<3>();
+    
+    auto ret = std::vector<int>(batch_size);
+    for(int b = 0; b < batch_size; b++) {
+        int z_cnt = 0;
+        for(int j = 0; j < y; j += 2) {
+            if(phy_err_acc(b, 0, j) == 2 || phy_err_acc(b, 0, j) == 3)
+                z_cnt++;
+        }
+        int x_cnt = 0;
+        for(int i = 0; i < x; i += 2) {
+            if(phy_err_acc(b, i, 0) == 1 || phy_err_acc(b, i, 0) == 2)
+                x_cnt++;
+        }
+        if(z_cnt == 1)
+            ret[b] = pauli_mult[ret[b]][3];
+        if(x_cnt == 1)
+            ret[b] = pauli_mult[ret[b]][1];
+    }
+    return py::array_t<int>(py::buffer_info(
+        ret.data(),
+        sizeof(int),
+        py::format_descriptor<int>::format(),
+        1,
+        std::vector<ssize_t>({batch_size}),
+        std::vector<ssize_t>({sizeof(int)})
+    ));
+}
+
+py::array_t<int> apply_logical_error(
+    py::array_t<int, py::array::forcecast | py::array::c_style> &physical_errors,
+    py::array_t<int, py::array::forcecast | py::array::c_style> &logical_errors
+) {
+    // physical_errors: shape (B, X, Y)
+    // logical_errors: shape (B, )
+
+    ssize_t batch_size = physical_errors.shape(0);
+    ssize_t x = physical_errors.shape(1);
+    ssize_t y = physical_errors.shape(2);
+    auto phy_err_acc = physical_errors.unchecked<3>();
+    auto log_err_acc = logical_errors.unchecked<1>();
+
+    auto ret = std::vector<int>(batch_size * x * y);
+    std::memcpy(ret.data(), physical_errors.data(), batch_size * x * y * sizeof(int));
+    
+    for(int b = 0; b < batch_size; b++) {
+        if(log_err_acc(b) == 1 || log_err_acc(b) == 2) {
+            for(int j = 0; j < y; j += 2) {
+                ret[b * x * y + 0 * y + j] = pauli_mult[ret[b * x * y + 0 * y + j]][1];
+            }
+        }
+        if(log_err_acc(b) == 3 || log_err_acc(b) == 2) {
+            for(int i = 0; i < x; i += 2) {
+                ret[b * x * y + i * y + 0] = pauli_mult[ret[b * x * y + i * y + 0]][3];
+            }
+        }
+    }
+
+    return py::array_t<int>(py::buffer_info(
+        ret.data(),
+        sizeof(int),
+        py::format_descriptor<int>::format(),
+        3, 
+        std::vector<ssize_t>({batch_size, x, y}),
+        std::vector<ssize_t>({(ssize_t)sizeof(int) * x * y, (ssize_t)sizeof(int) * y, (ssize_t)sizeof(int)})
+    ));
+}
+
+py::array_t<int> is_valid(
+    py::array_t<int, py::array::forcecast | py::array::c_style> &physical_errors
+) {
+    ssize_t batch_size = physical_errors.shape(0);
+    ssize_t x = physical_errors.shape(1);
+    ssize_t y = physical_errors.shape(2);
+    auto ret = std::vector<int>(batch_size);
+
+    for(int b = 0; b < batch_size; b++) {
+        auto list = std::vector<int>(x * y);
+        std::memcpy(list.data(), physical_errors.data() + b * x * y, x * y * sizeof(int));
+        bool is_valid = std::make_shared<Err::CodeScheme::RectError>(x, y, list)->is_valid();
+        ret[b] = is_valid;
+    }
+
+    return py::array_t<int>(py::buffer_info(
+        ret.data(),
+        sizeof(int),
+        py::format_descriptor<int>::format(),
+        1,
+        std::vector<ssize_t>({batch_size}),
+        std::vector<ssize_t>({sizeof(int)})
+    ));
+}
+
+PYBIND11_MODULE(deep_decoder_util, m) {
+    m.def("get_logical_error", &get_logical_error);
+    m.def("apply_logical_error", &apply_logical_error);
+    m.def("is_valid", &is_valid);
+}

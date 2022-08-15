@@ -190,7 +190,7 @@ RectangularError::RectangularError(int _x, int _y) {
     list = std::vector<int>(x * y, 0);
 }
 
-RectangularError::RectangularError(int _x, int _y, std::vector<int> _list) {
+RectangularError::RectangularError(int _x, int _y, const std::vector<int>& _list) {
     x = _x, y = _y;
     list = std::vector<int>(_list);
 }

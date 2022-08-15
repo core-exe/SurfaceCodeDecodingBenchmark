@@ -13,5 +13,6 @@ target_link_libraries(error_dynamics PUBLIC
     error_dynamics_error_model
     error_dynamics_code_scheme
 )
+set_target_properties(error_dynamics PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 target_include_directories(error_dynamics PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
