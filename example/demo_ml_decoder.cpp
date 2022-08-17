@@ -19,7 +19,6 @@ int main() {
     decoder.add_test_data(decoder.to_pyarray(decoder.generate_batch(code, 2, 1)));
     decoder.init();
     decoder.train();
-    decoder.load_model("foo");
     decoder(decoder.generate_batch(code, 16, 4));
 
     return 0;

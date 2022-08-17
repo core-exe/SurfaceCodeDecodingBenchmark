@@ -21,7 +21,9 @@ class MLDecoder: public BatchDecoder {
 
     virtual void init();
     virtual void train();
-    virtual void load_model(std::string path);
+    
+    virtual void set_path(std::string path);
+    virtual void set_name(std::string name);
 
     virtual std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::RectError>> operator()(std::vector<ErrorDynamics::RectData> datas);
 };

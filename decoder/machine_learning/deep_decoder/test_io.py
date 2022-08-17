@@ -5,6 +5,12 @@ n_train = 0
 n_valid = 0
 n_test = 0
 
+def set_path(path):
+    print("set path: {}".format(path))
+
+def set_name(name):
+    print("set name: {}".format(name))
+
 def receive_train_data(data: Tuple[np.ndarray, np.ndarray]):
     global n_train
     print("Received train data of shape: {}, {}".format(data[0].shape, data[1].shape))

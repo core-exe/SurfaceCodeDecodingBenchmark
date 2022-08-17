@@ -11,6 +11,7 @@ namespace Decoder::ML {
 MLDecoder::MLDecoder(std::string submodule_name) {
     py::module sys = py::module::import("sys");
     sys.attr("path").attr("append")(DEEP_DECODER_PY_PKG_PATH);
+    sys.attr("path").attr("append")(DEEP_DECODER_PY_PKG_PATH + std::string("/deep_decoder/"));
     module = py::module::import(("deep_decoder." + submodule_name).c_str());
 }
 
@@ -19,9 +20,16 @@ std::pair<py::array_t<int>, py::array_t<int>> MLDecoder::to_pyarray(std::vector<
     int length = datas[0].first->size();
     auto shape = datas[0].second->get_shape();
 
+    auto qubit_type = std::vector<int>(shape.x() * shape.y(), 0);
+    for(int i = 0; i < shape.x(); i++) {
+        for(int j = (i + 1) % 2; j < shape.y(); j += 2) {
+            qubit_type[i * shape.y() + j] = 1;
+        }
+    }
+
     std::vector<ssize_t> shape_data = {
         (ssize_t)batch_size,
-        (ssize_t)length,
+        (ssize_t)(1 + length),
         (ssize_t)shape.x(),
         (ssize_t)shape.y()
     };
@@ -33,7 +41,7 @@ std::pair<py::array_t<int>, py::array_t<int>> MLDecoder::to_pyarray(std::vector<
     };
 
     std::vector<ssize_t> stride_data = {
-        (ssize_t)(length * shape.x() * shape.y() * sizeof(int)),
+        (ssize_t)((1 + length) * shape.x() * shape.y() * sizeof(int)),
         (ssize_t)(shape.x() * shape.y() * sizeof(int)),
         (ssize_t)(shape.y() * sizeof(int)),
         sizeof(int)
@@ -45,14 +53,25 @@ std::pair<py::array_t<int>, py::array_t<int>> MLDecoder::to_pyarray(std::vector<
         sizeof(int)
     };
 
-    std::shared_ptr<int[]> data(new int[batch_size * length * shape.x() * shape.y()]);
+    std::shared_ptr<int[]> data(new int[batch_size * (1 + length) * shape.x() * shape.y()]);
     std::shared_ptr<int[]> target(new int[batch_size * shape.x() * shape.y()]);
 
     int batch_counter = 0;
     for(auto it_batch = datas.begin(); it_batch != datas.end(); batch_counter++, it_batch++) {
+        std::memcpy(
+            data.get() + (stride_data[0] / sizeof(int)) * batch_counter,
+            qubit_type.data(),
+            shape.x() * shape.y() * sizeof(int)
+        );
         int time_counter = 0;
         for(auto it_time = (*it_batch).first->begin(); it_time != (*it_batch).first->end(); time_counter++, it_time++)
-            std::memcpy(data.get() + (stride_data[0] / sizeof(int)) * batch_counter + (stride_data[1] / sizeof(int)) * time_counter, (*it_time)->to_vector().data(), shape.x() * shape.y() * sizeof(int));
+            std::memcpy(
+                data.get() + 
+                (stride_data[0] / sizeof(int)) * batch_counter + 
+                (stride_data[1] / sizeof(int)) * (time_counter + 1),
+                (*it_time)->to_vector().data(),
+                shape.x() * shape.y() * sizeof(int)
+            );
         std::memcpy(target.get() + (stride_target[0] / sizeof(int)) * batch_counter, (*it_batch).second->to_vector().data(), shape.x() * shape.y() * sizeof(int));
     }
 
@@ -96,8 +115,12 @@ void MLDecoder::train() {
     module.attr("begin_training")();
 }
 
-void MLDecoder::load_model(std::string path) {
-    module.attr("attach_model")(path);
+void MLDecoder::set_path(std::string path) {
+    module.attr("set_path")(path);
+}
+
+void MLDecoder::set_name(std::string name) {
+    module.attr("set_path")(name);
 }
 
 std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::RectError>> MLDecoder::operator()(std::vector<ErrorDynamics::RectData> datas) {

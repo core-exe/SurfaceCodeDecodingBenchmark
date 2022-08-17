@@ -110,8 +110,26 @@ py::array_t<int> is_valid(
     ));
 }
 
+py::array_t<int> qubit_type(
+    int x, int y
+) {
+    auto ret = std::vector<int>(x * y);
+    for(int i = 0; i < x; i++)
+        for(int j = (i + 1) % 2; j < y; j += 2)
+            ret[i * y + j] = 1;
+    return py::array_t<int>(py::buffer_info(
+        ret.data(),
+        sizeof(int),
+        py::format_descriptor<int>::format(),
+        2,
+        {x, y},
+        {y * sizeof(int), sizeof(int)}
+    ));
+}
+
 PYBIND11_MODULE(deep_decoder_util, m) {
     m.def("get_logical_error", &get_logical_error);
     m.def("apply_logical_error", &apply_logical_error);
     m.def("is_valid", &is_valid);
+    m.def("qubit_type", &qubit_type);
 }
