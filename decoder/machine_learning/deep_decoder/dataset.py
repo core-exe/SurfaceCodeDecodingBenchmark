@@ -13,7 +13,7 @@ class LowLevelDataset(Dataset):
     def insert_data(self, data):
         # data: ([B, C, H, W], [B, H, W])
         syndrome, error = data
-        self.syndrome_list.append(torch.from_numpy(syndrome))
+        self.syndrome_list.append(torch.from_numpy(syndrome).float())
         self.error_list.append(torch.from_numpy(error))
 
     def prepare(self):
@@ -41,7 +41,7 @@ class HighLevelDataset(Dataset):
         self.split = split
     
     def insert_data(self, data):
-        self.syndrome_list.append(torch.from_numpy(data[0]))
+        self.syndrome_list.append(torch.from_numpy(data[0]).float())
     
     def prepare(self):
         print(self.split)
@@ -62,10 +62,10 @@ class HighLevelDataset(Dataset):
     def __getitem__(self, index):
         return (self.syndrome_tensor[index,...], self.error_tensor[index])
 
-def tensor_cat_collate_fn(datas):
+def tensor_stack_collate_fn(datas):
     tuple_length = len(datas[0])
     ls = [[] for _ in range(tuple_length)]
     for t in datas:
         for i in range(tuple_length):
             ls[i].append(t[i])
-    return tuple((torch.cat(ls[i], dim=0) for i in range(tuple_length)))
+    return tuple((torch.stack(ls[i], dim=0) for i in range(tuple_length)))

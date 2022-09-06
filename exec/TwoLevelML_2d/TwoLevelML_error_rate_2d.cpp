@@ -22,10 +22,10 @@ std::string get_name(int d, float p) {
 int main() {
     py::scoped_interpreter guard{};
 
-    int d = 7;
+    int d = 27;
     float p = 0.01;
 
-    auto data_path = std::filesystem::path(PROJECT_ROOT_PATH) / "exec" / "TwoLevelML_2d" / "out";
+    auto data_path = std::filesystem::path(PROJECT_ROOT_PATH) / "exec" / "TwoLevelML_2d" / "out" / "models";
     auto ml_decoder = Dc::ML::MLDecoder("two_level_decoder");
 
     auto code = std::make_shared<Err::RectangularSurfaceCode>(
@@ -40,5 +40,8 @@ int main() {
         ml_decoder.add_valid_data(ml_decoder.to_pyarray(ml_decoder.generate_batch(code, INSERT_BATCH_SIZE, 1)));
     }
     ml_decoder.init();
+    ml_decoder.set_path(data_path);
+    ml_decoder.set_name(get_name(d, p));
+    ml_decoder.train();
     return 0;
 }

@@ -120,7 +120,7 @@ void MLDecoder::set_path(std::string path) {
 }
 
 void MLDecoder::set_name(std::string name) {
-    module.attr("set_path")(name);
+    module.attr("set_name")(name);
 }
 
 std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::RectError>> MLDecoder::operator()(std::vector<ErrorDynamics::RectData> datas) {

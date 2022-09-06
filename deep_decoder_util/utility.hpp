@@ -26,3 +26,8 @@ py::array_t<int> is_valid(
 py::array_t<int> qubit_type(
     int x, int y
 );
+
+py::array_t<int> apply_physical_correction(
+    py::array_t<int, py::array::forcecast | py::array::c_style> &physical_errors,
+    py::array_t<int, py::array::forcecast | py::array::c_style> &corrections
+);

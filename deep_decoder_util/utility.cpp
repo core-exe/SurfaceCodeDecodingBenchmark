@@ -127,9 +127,32 @@ py::array_t<int> qubit_type(
     ));
 }
 
+py::array_t<int> apply_physical_correction(
+    py::array_t<int, py::array::forcecast | py::array::c_style> &physical_errors,
+    py::array_t<int, py::array::forcecast | py::array::c_style> &corrections
+) {
+    py::array_t<int> ret = py::array_t<int>(physical_errors);
+    ssize_t batch_size = physical_errors.shape(0);
+    ssize_t x = physical_errors.shape(1);
+    ssize_t y = physical_errors.shape(2);
+    
+    auto phy_acc = physical_errors.unchecked<3>();
+    auto cor_acc = corrections.unchecked<3>();
+    auto ret_acc = ret.mutable_unchecked<3>();
+    for(int b = 0; b < batch_size; b++) {
+        for(int i = 0; i < x; i++) {
+            for(int j = i % 2; j < y; j += 2) {
+                ret_acc(b, i, j) = pauli_mult[phy_acc(b, i, j)][cor_acc(b, i, j)];
+            }
+        }
+    }
+    return ret;
+}
+
 PYBIND11_MODULE(deep_decoder_util, m) {
     m.def("get_logical_error", &get_logical_error);
     m.def("apply_logical_error", &apply_logical_error);
     m.def("is_valid", &is_valid);
     m.def("qubit_type", &qubit_type);
+    m.def("apply_physical_correction", &apply_physical_correction);
 }
