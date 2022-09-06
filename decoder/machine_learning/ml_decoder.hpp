@@ -13,7 +13,7 @@ class MLDecoder: public BatchDecoder {
     public:
     MLDecoder(std::string submodule_name);
     
-    static std::pair<pybind11::array_t<int>, pybind11::array_t<int>> to_pyarray(std::vector<ErrorDynamics::RectData> datas);
+    static std::pair<pybind11::array_t<int>, pybind11::array_t<int>> to_pyarray(std::vector<ErrorDynamics::PlanarData> datas);
 
     virtual void add_train_data(std::pair<pybind11::array_t<int>, pybind11::array_t<int>> train_data);
     virtual void add_valid_data(std::pair<pybind11::array_t<int>, pybind11::array_t<int>> valid_data);
@@ -25,7 +25,7 @@ class MLDecoder: public BatchDecoder {
     virtual void set_path(std::string path);
     virtual void set_name(std::string name);
 
-    virtual std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::RectError>> operator()(std::vector<ErrorDynamics::RectData> datas);
+    virtual std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError>> operator()(std::vector<ErrorDynamics::PlanarData> datas);
 };
 
 }

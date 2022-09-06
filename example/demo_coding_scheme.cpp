@@ -8,7 +8,7 @@ using namespace ErrorDynamics;
 
 
 int main(){
-    auto scheme = CodeScheme::RectScheme(7);
+    auto scheme = CodeScheme::PlanarScheme(7);
     cout << scheme.to_string(true, 2) << endl;
 
     while(true) {
@@ -29,7 +29,7 @@ int main(){
         else
             continue;
         try {
-            scheme.add_data_error(CodeScheme::RectIndex(i, j), pauli);
+            scheme.add_data_error(CodeScheme::PlanarIndex(i, j), pauli);
         }
         catch(const std::exception& e) {
             cout << e.what() << '\n';

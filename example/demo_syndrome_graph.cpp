@@ -11,7 +11,7 @@ using namespace Decoder;
 int main() {
     int t_total = 1;
     double p = 0.01;
-    auto code = RectangularSurfaceCode(7, p);
+    auto code = PlanarSurfaceCode(7, p);
     code.step(t_total);
     auto data = code.get_data();
 
@@ -25,20 +25,20 @@ int main() {
     }
 
     auto shape = code.get_shape();
-    auto dist_func = [p, shape](Matching::RectIndex3d idx_a, Matching::RectIndex3d idx_b) -> pair<bool, double> {
+    auto dist_func = [p, shape](Matching::PlanarIndex3d idx_a, Matching::PlanarIndex3d idx_b) -> pair<bool, double> {
         if((idx_a.i() - idx_b.i()) % 2 != 0) {
             return make_pair(false, (double)0.0);
         }
         return make_pair(true, -((abs(idx_a.i() - idx_b.i()) + abs(idx_a.j() - idx_b.j())) / 2) * (double)log(p));
     };
-    auto dist_func_space = [p, shape](Matching::RectIndex3d idx_a) -> pair<int, double> {
+    auto dist_func_space = [p, shape](Matching::PlanarIndex3d idx_a) -> pair<int, double> {
         int pos = ((idx_a.i() % 2 == 1) ? idx_a.i() : idx_a.j());
         int length = ((idx_a.i() % 2 == 1) ? shape.x() : shape.y());
         int direction = ((2 * pos) <= length - 1 ? 0 : 1);
         int distance = (((direction == 0) ? pos : (length - 1) - pos) + 1) / 2;
         return make_pair(direction, - distance * (double)log(p));
     };
-    auto dist_func_time = [](Matching::RectIndex3d idx_a) -> pair<int, double> {
+    auto dist_func_time = [](Matching::PlanarIndex3d idx_a) -> pair<int, double> {
         return make_pair(0, (double)0.0);
     };
     auto syndrome_graph = Matching::get_graph(

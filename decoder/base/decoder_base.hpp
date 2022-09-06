@@ -9,20 +9,20 @@ class DecoderBase {
     public:
     DecoderBase(){}
 
-    virtual std::shared_ptr<ErrorDynamics::CodeScheme::RectError> operator() (ErrorDynamics::RectData data) = 0;
-    virtual std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::RectError>> operator()(std::vector<ErrorDynamics::RectData> datas);
+    virtual std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> operator() (ErrorDynamics::PlanarData data) = 0;
+    virtual std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError>> operator()(std::vector<ErrorDynamics::PlanarData> datas);
 };
 
 class BatchDecoder: public DecoderBase {
     public:
     BatchDecoder(){}
 
-    std::vector<ErrorDynamics::RectData> generate_batch(std::shared_ptr<ErrorDynamics::RectangularSurfaceCode> code, int batch_size, int step);
+    std::vector<ErrorDynamics::PlanarData> generate_batch(std::shared_ptr<ErrorDynamics::PlanarSurfaceCode> code, int batch_size, int step);
 
-    inline virtual std::shared_ptr<ErrorDynamics::CodeScheme::RectError> operator() (ErrorDynamics::RectData data) {
-        return this->operator()(std::vector<ErrorDynamics::RectData>({ data }))[0];
+    inline virtual std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> operator() (ErrorDynamics::PlanarData data) {
+        return this->operator()(std::vector<ErrorDynamics::PlanarData>({ data }))[0];
     }
-    virtual std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::RectError>> operator()(std::vector<ErrorDynamics::RectData> datas) = 0;
+    virtual std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError>> operator()(std::vector<ErrorDynamics::PlanarData> datas) = 0;
 };
 
 

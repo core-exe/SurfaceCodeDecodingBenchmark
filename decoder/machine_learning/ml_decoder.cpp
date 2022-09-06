@@ -15,7 +15,7 @@ MLDecoder::MLDecoder(std::string submodule_name) {
     module = py::module::import(("deep_decoder." + submodule_name).c_str());
 }
 
-std::pair<py::array_t<int>, py::array_t<int>> MLDecoder::to_pyarray(std::vector<ErrorDynamics::RectData> datas){
+std::pair<py::array_t<int>, py::array_t<int>> MLDecoder::to_pyarray(std::vector<ErrorDynamics::PlanarData> datas){
     int batch_size = datas.size();
     int length = datas[0].first->size();
     auto shape = datas[0].second->get_shape();
@@ -123,18 +123,18 @@ void MLDecoder::set_name(std::string name) {
     module.attr("set_name")(name);
 }
 
-std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::RectError>> MLDecoder::operator()(std::vector<ErrorDynamics::RectData> datas) {
+std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError>> MLDecoder::operator()(std::vector<ErrorDynamics::PlanarData> datas) {
     auto query = MLDecoder::to_pyarray(datas);
     auto ret = py::array_t<int>(module.attr("query_data")(query.first));
     int batch_size = ret.shape(0);
     int x = ret.shape(1);
     int y = ret.shape(2);
 
-    auto corrections = std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::RectError>>(0);
+    auto corrections = std::vector<std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError>>(0);
     for(int b = 0; b < batch_size; b++) {
         auto list = std::vector<int>(x * y);
         std::memcpy(list.data(), ret.data() + b * x * y, x * y * sizeof(int));
-        corrections.push_back(std::make_shared<ErrorDynamics::CodeScheme::RectError>(x, y, list));
+        corrections.push_back(std::make_shared<ErrorDynamics::CodeScheme::PlanarError>(x, y, list));
     }
 
     return corrections;

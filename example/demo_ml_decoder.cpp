@@ -10,7 +10,7 @@ namespace Cs = Err::CodeScheme;
 int main() {
     pybind11::scoped_interpreter guard{};
 
-    auto code = std::make_shared<Err::RectangularSurfaceCode>(7, 0.01);
+    auto code = std::make_shared<Err::PlanarSurfaceCode>(7, 0.01);
     
     auto decoder = Dc::ML::MLDecoder("test_io");
     

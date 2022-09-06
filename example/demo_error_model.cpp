@@ -7,7 +7,7 @@ using namespace ErrorDynamics;
 
 
 int main(){
-    auto scheme = CodeScheme::RectScheme(11);
+    auto scheme = CodeScheme::PlanarScheme(11);
     cout << scheme.to_string(true, 1) << endl;
     double p = 0.01;
     auto error_model = ErrorModel::IIDError(p);
@@ -18,7 +18,7 @@ int main(){
         c = getchar();
         if(c == 'e')
             break;
-        auto errors = error_model.generate_rectangular_error(scheme.get_shape());
+        auto errors = error_model.generate_planar_error(scheme.get_shape());
         scheme.add_data_error(errors.first);
         scheme.add_syndrome_error(errors.second);
         cout << "t = " << t << endl;

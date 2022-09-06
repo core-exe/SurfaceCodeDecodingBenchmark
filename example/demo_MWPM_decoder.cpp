@@ -14,13 +14,13 @@ int main() {
     int d = 9;
     auto error_model_ptr = new Err::ErrorModel::IIDError(p, p, p, 0);
     shared_ptr<Err::ErrorModel::ErrorModelBase> error_model(error_model_ptr);
-    auto code = Err::RectangularSurfaceCode(9, error_model);
+    auto code = Err::PlanarSurfaceCode(9, error_model);
     if(MODE == 0)
         code.step(t_total);
     else {
-        auto d_error = make_shared<Err::CodeScheme::RectError>(d);
-        auto m_error = make_shared<Err::CodeScheme::RectSyndrome>(d);
-        d_error->mult_error(Err::CodeScheme::RectIndex(8, 2), Err::Util::Pauli::Y);
+        auto d_error = make_shared<Err::CodeScheme::PlanarError>(d);
+        auto m_error = make_shared<Err::CodeScheme::PlanarSyndrome>(d);
+        d_error->mult_error(Err::CodeScheme::PlanarIndex(8, 2), Err::Util::Pauli::Y);
         code.manual_step(d_error, m_error);
     }
 

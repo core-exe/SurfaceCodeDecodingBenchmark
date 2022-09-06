@@ -16,7 +16,7 @@ class IIDError: public ErrorModelBase{
     };
     inline IIDError(double p) : IIDError(p, p, p, p / 3.0f * 2.0f) {}
 
-    std::pair<std::shared_ptr<CodeScheme::RectError>, std::shared_ptr<CodeScheme::RectSyndrome>> generate_rectangular_error(const CodeScheme::RectShape shape);
+    std::pair<std::shared_ptr<CodeScheme::PlanarError>, std::shared_ptr<CodeScheme::PlanarSyndrome>> generate_planar_error(const CodeScheme::PlanarShape shape);
 
 };
 

@@ -32,7 +32,7 @@ vector<int> test_batch(int d, double p_eff, int mode = 0) {
         double p_independent = sqrt(1 + p_eff) - 1;
         error_model = static_pointer_cast<Err::ErrorModel::ErrorModelBase>(make_shared<Err::ErrorModel::IIDError>(p_independent,  pow(p_independent, 2.0), p_independent, 0));
     }
-    auto code = Err::RectangularSurfaceCode(d, error_model);
+    auto code = Err::PlanarSurfaceCode(d, error_model);
     auto decoder = Dc::Matching::StandardMWPMDecoder(p_eff, p_eff, p_eff, 0, false, code.get_shape());
     
     for(int _ = 0; _ < BATCH_SIZE; _++) {

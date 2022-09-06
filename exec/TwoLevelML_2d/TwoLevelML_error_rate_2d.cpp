@@ -28,7 +28,7 @@ int main() {
     auto data_path = std::filesystem::path(PROJECT_ROOT_PATH) / "exec" / "TwoLevelML_2d" / "out" / "models";
     auto ml_decoder = Dc::ML::MLDecoder("two_level_decoder");
 
-    auto code = std::make_shared<Err::RectangularSurfaceCode>(
+    auto code = std::make_shared<Err::PlanarSurfaceCode>(
         d,
         std::make_shared<Err::ErrorModel::IIDError>(p / 3, p / 3, p / 3, 0)
     );

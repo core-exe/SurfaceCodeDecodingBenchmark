@@ -96,7 +96,7 @@ py::array_t<int> is_valid(
     for(int b = 0; b < batch_size; b++) {
         auto list = std::vector<int>(x * y);
         std::memcpy(list.data(), physical_errors.data() + b * x * y, x * y * sizeof(int));
-        bool is_valid = std::make_shared<Err::CodeScheme::RectError>(x, y, list)->is_valid();
+        bool is_valid = std::make_shared<Err::CodeScheme::PlanarError>(x, y, list)->is_valid();
         ret[b] = is_valid;
     }
 

@@ -7,7 +7,7 @@ using namespace ErrorDynamics;
 
 int main() {
     int t_total = 10;
-    auto code = RectangularSurfaceCode(11, 0.01);
+    auto code = PlanarSurfaceCode(11, 0.01);
     code.step(t_total);
     auto data = code.get_data();
 

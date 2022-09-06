@@ -5,8 +5,8 @@ using namespace std;
 namespace Decoder::Matching {
 
 shared_ptr<SyndromeGraph> get_graph(
-    ErrorDynamics::RectData data,
-    ErrorDynamics::CodeScheme::RectShape shape,
+    ErrorDynamics::PlanarData data,
+    ErrorDynamics::CodeScheme::PlanarShape shape,
     bool measurement_error,
     const distance_function& distance_func,
     const edge_distance_function& edge_distance_func_space,
@@ -21,9 +21,9 @@ shared_ptr<SyndromeGraph> get_graph(
     for(auto p = syndromes->cbegin(); p != syndromes->cend(); t++, p++) {
         for(int i = 0; i < shape.x(); i++) {
             for(int j = (i + 1) % 2; j < shape.y(); j += 2) {
-                if((*p)->get_symptom(ErrorDynamics::CodeScheme::RectIndex(i, j)) == ErrorDynamics::Util::Symptom::NEGATIVE) {
+                if((*p)->get_symptom(ErrorDynamics::CodeScheme::PlanarIndex(i, j)) == ErrorDynamics::Util::Symptom::NEGATIVE) {
                     // the inside vertex
-                    RectIndex3d inside_idx = RectIndex3d(i, j, t);
+                    PlanarIndex3d inside_idx = PlanarIndex3d(i, j, t);
                     int vertex_inside = vertex_count++;
                     syndrome_graph->graph.AddVertex();
                     syndrome_graph->index_lookup.push_back(inside_idx);
@@ -33,9 +33,9 @@ shared_ptr<SyndromeGraph> get_graph(
                     syndrome_graph->graph.AddVertex();
                     auto edge_weight = edge_distance_func_space(inside_idx);
                     if((i % 2) == 1) // connect towards i = 0 or i = x ( measure-X qubit)
-                        syndrome_graph->index_lookup.push_back(RectIndex3d(NodeType::ESX, (Direction)edge_weight.first));
+                        syndrome_graph->index_lookup.push_back(PlanarIndex3d(NodeType::ESX, (Direction)edge_weight.first));
                     else // connect towards j = 0 or i = y (measure-Z qubit)
-                        syndrome_graph->index_lookup.push_back(RectIndex3d(NodeType::ESZ, (Direction)edge_weight.first));
+                        syndrome_graph->index_lookup.push_back(PlanarIndex3d(NodeType::ESZ, (Direction)edge_weight.first));
                     
                     syndrome_graph->graph.AddEdge(vertex_inside, vertex_edge_space);
                     weight.push_back(edge_weight.second);
@@ -47,9 +47,9 @@ shared_ptr<SyndromeGraph> get_graph(
                         auto edge_weight = edge_distance_func_time(inside_idx);
 
                         if((i % 2) == 1) // connect towards t = 0 or t = T ( measure-X qubit)
-                            syndrome_graph->index_lookup.push_back(RectIndex3d(NodeType::ETX, (Direction)edge_weight.first));
+                            syndrome_graph->index_lookup.push_back(PlanarIndex3d(NodeType::ETX, (Direction)edge_weight.first));
                         else // connect towards t = 0 or t = T (measure-Z qubit)
-                            syndrome_graph->index_lookup.push_back(RectIndex3d(NodeType::ETZ, (Direction)edge_weight.first));
+                            syndrome_graph->index_lookup.push_back(PlanarIndex3d(NodeType::ETZ, (Direction)edge_weight.first));
 
                         syndrome_graph->graph.AddEdge(vertex_inside, vertex_edge_time);
                         weight.push_back(edge_weight.second);
@@ -79,12 +79,12 @@ shared_ptr<SyndromeGraph> get_graph(
     return syndrome_graph;
 }
 
-std::shared_ptr<ErrorDynamics::CodeScheme::RectangularError> matching_to_correction(
+std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> matching_to_correction(
     std::shared_ptr<SyndromeGraph> syndrome_graph,
-    ErrorDynamics::CodeScheme::RectShape shape,
+    ErrorDynamics::CodeScheme::PlanarShape shape,
     const std::list<int>& matching
 ) {
-    auto error = std::make_shared<ErrorDynamics::CodeScheme::RectangularError>(shape.x(), shape.y());
+    auto error = std::make_shared<ErrorDynamics::CodeScheme::PlanarError>(shape.x(), shape.y());
     auto graph = syndrome_graph->graph;
     auto idx_lookup = syndrome_graph->index_lookup;
     for(auto it = matching.cbegin(); it != matching.cend(); it++) {
@@ -107,15 +107,15 @@ std::shared_ptr<ErrorDynamics::CodeScheme::RectangularError> matching_to_correct
         auto pauli = (ErrorDynamics::Util::Pauli)((idx_a.i() % 2 == 0) ? 1 : 3);
         if(in_a && in_b) { // both excitement inside the qubit array
             for(int i = idx_a.i(), delta = ((idx_b.i() - idx_a.i()) > 0 ? 1 : -1); i != idx_b.i(); i += (2 * delta))
-                error->mult_error(ErrorDynamics::CodeScheme::RectIndex(i + delta, idx_a.j()), pauli);
+                error->mult_error(ErrorDynamics::CodeScheme::PlanarIndex(i + delta, idx_a.j()), pauli);
             for(int j = idx_a.j(), delta = ((idx_b.j() - idx_a.j()) > 0 ? 1 : -1); j != idx_b.j(); j += (2 * delta))
-                error->mult_error(ErrorDynamics::CodeScheme::RectIndex(idx_b.i(), j + delta), pauli);
+                error->mult_error(ErrorDynamics::CodeScheme::PlanarIndex(idx_b.i(), j + delta), pauli);
         } else if(idx_a.i() % 2 == 1) {
             for(int i = idx_a.i(), delta = (idx_b.direction == Direction::NEG ? -1 : 1); i >= 0 && i < shape.x(); i += (2 * delta))
-                error->mult_error(ErrorDynamics::CodeScheme::RectIndex(i + delta, idx_a.j()), pauli);
+                error->mult_error(ErrorDynamics::CodeScheme::PlanarIndex(i + delta, idx_a.j()), pauli);
         } else {
             for(int j = idx_a.j(), delta = (idx_b.direction == Direction::NEG ? -1 : 1); j >= 0 && j < shape.y(); j += (2 * delta))
-                error->mult_error(ErrorDynamics::CodeScheme::RectIndex(idx_a.i(), j + delta), pauli);
+                error->mult_error(ErrorDynamics::CodeScheme::PlanarIndex(idx_a.i(), j + delta), pauli);
         }
     }
     return error;

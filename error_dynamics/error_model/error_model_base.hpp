@@ -12,7 +12,7 @@ class ErrorModelBase {
     public:
     ErrorModelBase(){}
     
-    virtual std::pair<std::shared_ptr<CodeScheme::RectError>, std::shared_ptr<CodeScheme::RectSyndrome>> generate_rectangular_error(const CodeScheme::RectShape shape) = 0;
+    virtual std::pair<std::shared_ptr<CodeScheme::PlanarError>, std::shared_ptr<CodeScheme::PlanarSyndrome>> generate_planar_error(const CodeScheme::PlanarShape shape) = 0;
 };
 
 }};
