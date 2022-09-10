@@ -1,6 +1,9 @@
 #include "matching_util.hpp"
+#include <iostream>
 
 using namespace std;
+namespace Err = ErrorDynamics;
+namespace Cs = Err::CodeScheme;
 
 namespace Decoder::Matching {
 
@@ -8,73 +11,75 @@ shared_ptr<SyndromeGraph> get_graph(
     ErrorDynamics::PlanarData data,
     ErrorDynamics::CodeScheme::PlanarShape shape,
     bool measurement_error,
-    const distance_function& distance_func,
-    const edge_distance_function& edge_distance_func_space,
-    const edge_distance_function& edge_distance_func_time
+    const distance_function& distance_func
 ) {
     auto syndrome_graph = make_shared<SyndromeGraph>();
     auto syndromes = data.first;
     int total_time = syndromes->size();
-    int t = 0;
     int vertex_count = 0;
+    auto& graph = syndrome_graph->graph;
+    auto& idx_lookup = syndrome_graph->index_lookup;
+    auto& edge_type = syndrome_graph->edge_type;
     auto& weight = syndrome_graph->weight;
-    for(auto p = syndromes->cbegin(); p != syndromes->cend(); t++, p++) {
-        for(int i = 0; i < shape.x(); i++) {
-            for(int j = (i + 1) % 2; j < shape.y(); j += 2) {
-                if((*p)->get_symptom(ErrorDynamics::CodeScheme::PlanarIndex(i, j)) == ErrorDynamics::Util::Symptom::NEGATIVE) {
-                    // the inside vertex
-                    PlanarIndex3d inside_idx = PlanarIndex3d(i, j, t);
-                    int vertex_inside = vertex_count++;
-                    syndrome_graph->graph.AddVertex();
-                    syndrome_graph->index_lookup.push_back(inside_idx);
-
-                    // the space edge vertex
-                    int vertex_edge_space = vertex_count++;
-                    syndrome_graph->graph.AddVertex();
-                    auto edge_weight = edge_distance_func_space(inside_idx);
-                    if((i % 2) == 1) // connect towards i = 0 or i = x ( measure-X qubit)
-                        syndrome_graph->index_lookup.push_back(PlanarIndex3d(NodeType::ESX, (Direction)edge_weight.first));
-                    else // connect towards j = 0 or i = y (measure-Z qubit)
-                        syndrome_graph->index_lookup.push_back(PlanarIndex3d(NodeType::ESZ, (Direction)edge_weight.first));
-                    
-                    syndrome_graph->graph.AddEdge(vertex_inside, vertex_edge_space);
-                    weight.push_back(edge_weight.second);
-                    
-                    // the time edge vertex
-                    if(measurement_error) {
-                        int vertex_edge_time = vertex_count++;
-                        syndrome_graph->graph.AddVertex();
-                        auto edge_weight = edge_distance_func_time(inside_idx);
-
-                        if((i % 2) == 1) // connect towards t = 0 or t = T ( measure-X qubit)
-                            syndrome_graph->index_lookup.push_back(PlanarIndex3d(NodeType::ETX, (Direction)edge_weight.first));
-                        else // connect towards t = 0 or t = T (measure-Z qubit)
-                            syndrome_graph->index_lookup.push_back(PlanarIndex3d(NodeType::ETZ, (Direction)edge_weight.first));
-
-                        syndrome_graph->graph.AddEdge(vertex_inside, vertex_edge_time);
+    
+    for(int i = 0; i < shape.x(); i += 2) {
+        for(int j = 1; j < shape.y(); j += 2) {
+            int t = 0;
+            for(auto p = syndromes->cbegin(); p != syndromes->cend(); t++, p++) {
+                if((*p)->get_symptom(Cs::PlanarIndex(i, j)) == Err::Util::Symptom::NEGATIVE) {
+                    idx_lookup.push_back(PlanarIndex3d(i, j, t));
+                    graph.AddVertex();
+                    for(int k = 0; k < vertex_count; k++) {
+                        auto edge_weight = distance_func(idx_lookup[k], PlanarIndex3d(i, j, t));
+                        graph.AddEdge(k, vertex_count);
+                        edge_type.push_back(edge_weight.first);
                         weight.push_back(edge_weight.second);
                     }
-                    
-                    for(int k = 0; k < vertex_inside; k++) {
-                        if(syndrome_graph->index_lookup[k].is_in()) {
-                            auto edge_weight = distance_func(inside_idx, syndrome_graph->index_lookup[k]);
-                            if(edge_weight.first) {
-                                syndrome_graph->graph.AddEdge(vertex_inside, k);
-                                weight.push_back(edge_weight.second);
-                            }
-                        } else if(syndrome_graph->index_lookup[k].node_type == syndrome_graph->index_lookup[vertex_inside + 1].node_type) {
-                            syndrome_graph->graph.AddEdge(vertex_inside + 1, k);
-                            weight.push_back(0);
-                        } else if(measurement_error) {
-                            if(syndrome_graph->index_lookup[k].node_type == syndrome_graph->index_lookup[vertex_inside + 2].node_type) {
-                                syndrome_graph->graph.AddEdge(vertex_inside + 2, k);
-                                weight.push_back(0);
-                            }
-                        }
-                    }
+                    vertex_count++;
                 }
             }
         }
+    }
+    if(vertex_count % 2 == 1) {
+        idx_lookup.push_back(PlanarIndex3d());
+        graph.AddVertex();
+        for(int k = 0; k < vertex_count; k++) {
+            auto edge_weight = distance_func(idx_lookup[k], PlanarIndex3d());
+            graph.AddEdge(k, vertex_count);
+            edge_type.push_back(edge_weight.first);
+            weight.push_back(edge_weight.second);
+        }
+        vertex_count++;
+    }
+    int init_x_vertex = vertex_count;
+    for(int i = 1; i < shape.x(); i += 2) {
+        for(int j = 0; j < shape.y(); j += 2) {
+            int t = 0;
+            for(auto p = syndromes->cbegin(); p != syndromes->cend(); t++, p++) {
+                if((*p)->get_symptom(Cs::PlanarIndex(i, j)) == Err::Util::Symptom::NEGATIVE) {
+                    idx_lookup.push_back(PlanarIndex3d(i, j, t));
+                    graph.AddVertex();
+                    for(int k = init_x_vertex; k < vertex_count; k++) {
+                        auto edge_weight = distance_func(idx_lookup[k], PlanarIndex3d(i, j, t));
+                        graph.AddEdge(k, vertex_count);
+                        edge_type.push_back(edge_weight.first);
+                        weight.push_back(edge_weight.second);
+                    }
+                    vertex_count++;
+                }
+            }
+        }
+    }
+    if(vertex_count % 2 == 1) {
+        idx_lookup.push_back(PlanarIndex3d());
+        graph.AddVertex();
+        for(int k = 0; k < vertex_count; k++) {
+            auto edge_weight = distance_func(idx_lookup[k], PlanarIndex3d());
+            graph.AddEdge(k, vertex_count);
+            edge_type.push_back(edge_weight.first);
+            weight.push_back(edge_weight.second);
+        }
+        vertex_count++;
     }
     return syndrome_graph;
 }
@@ -85,42 +90,81 @@ std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> matching_to_correction(
     const std::list<int>& matching
 ) {
     auto error = std::make_shared<ErrorDynamics::CodeScheme::PlanarError>(shape.x(), shape.y());
-    auto graph = syndrome_graph->graph;
-    auto idx_lookup = syndrome_graph->index_lookup;
+    auto& graph = syndrome_graph->graph;
+    auto& idx_lookup = syndrome_graph->index_lookup;
+    auto& edge_type = syndrome_graph->edge_type;
+    auto& weight = syndrome_graph->weight;
+    
     for(auto it = matching.cbegin(); it != matching.cend(); it++) {
         auto edge = graph.GetEdge(*it);
-        bool in_a = idx_lookup[edge.first].is_in();
-        bool in_b = idx_lookup[edge.second].is_in();
-        if(!(in_a || in_b))
-            continue;
-        int vertex_a, vertex_b;
-        if(!in_a) {
-            vertex_a = edge.second;
-            vertex_b = edge.first;
+        int u = edge.first, v = edge.second;
+        auto idx_u = idx_lookup[u];
+        auto idx_v = idx_lookup[v];
+        auto e_type = edge_type[*it];
+        if(idx_v.virt) {
+            if(e_type == EdgeType::TIME)
+                continue;
+            bool axis = (idx_u.i() % 2 == 1); // true for index i, false for index j
+            auto pauli = ((idx_u.i() % 2 == 0) ? Err::Util::Pauli::X : Err::Util::Pauli::Z);
+            bool dir = get_chain_direction(e_type, 0);
+            int delta = (dir ? 1 : -1);
+            int bound = (dir ? (axis ? shape.x() : shape.y()) : -1);
+            for(int current_idx = (axis ? idx_u.i() : idx_u.j()); current_idx != bound; current_idx += delta * 2)
+                error->mult_error(axis ? Cs::PlanarIndex(current_idx + delta, idx_u.j()) : Cs::PlanarIndex(idx_u.i(), current_idx + delta), pauli);
         } else {
-            vertex_a = edge.first;
-            vertex_b = edge.second;
-        }
-        auto &idx_a = idx_lookup[vertex_a], &idx_b = idx_lookup[vertex_b];
-        if(idx_b.node_type == NodeType::ETX || idx_b.node_type == NodeType::ETZ) // ignore the measurement error
-            continue;
-        auto pauli = (ErrorDynamics::Util::Pauli)((idx_a.i() % 2 == 0) ? 1 : 3);
-        if(in_a && in_b) { // both excitement inside the qubit array
-            for(int i = idx_a.i(), delta = ((idx_b.i() - idx_a.i()) > 0 ? 1 : -1); i != idx_b.i(); i += (2 * delta))
-                error->mult_error(ErrorDynamics::CodeScheme::PlanarIndex(i + delta, idx_a.j()), pauli);
-            for(int j = idx_a.j(), delta = ((idx_b.j() - idx_a.j()) > 0 ? 1 : -1); j != idx_b.j(); j += (2 * delta))
-                error->mult_error(ErrorDynamics::CodeScheme::PlanarIndex(idx_b.i(), j + delta), pauli);
-        } else if(idx_a.i() % 2 == 1) {
-            for(int i = idx_a.i(), delta = (idx_b.direction == Direction::NEG ? -1 : 1); i >= 0 && i < shape.x(); i += (2 * delta))
-                error->mult_error(ErrorDynamics::CodeScheme::PlanarIndex(i + delta, idx_a.j()), pauli);
-        } else {
-            for(int j = idx_a.j(), delta = (idx_b.direction == Direction::NEG ? -1 : 1); j >= 0 && j < shape.y(); j += (2 * delta))
-                error->mult_error(ErrorDynamics::CodeScheme::PlanarIndex(idx_a.i(), j + delta), pauli);
+            if(e_type == EdgeType::TIME)
+                continue;
+            if(e_type == EdgeType::IN) {
+                auto pauli = ((idx_u.i() % 2 == 0) ? Err::Util::Pauli::X : Err::Util::Pauli::Z);
+                int dx = (idx_v.i() - idx_u.i() >= 0 ? 1 : -1);
+                int dy = (idx_v.j() - idx_u.j() >= 0 ? 1 : -1);
+                for(int current_i = idx_u.i(); current_i != idx_v.i(); current_i += 2 * dx)
+                    error->mult_error(Cs::PlanarIndex(current_i + dx, idx_u.j()), pauli);
+                for(int current_j = idx_u.j(); current_j != idx_v.j(); current_j += 2 * dy)
+                    error->mult_error(Cs::PlanarIndex(idx_v.i(), current_j + dy), pauli);
+            } else {
+                bool axis = (idx_u.i() % 2 == 1); // true for index i, false for index j
+                auto pauli = ((idx_u.i() % 2 == 0) ? Err::Util::Pauli::X : Err::Util::Pauli::Z);
+                bool dir = get_chain_direction(e_type, 0);
+                int delta = (dir ? 1 : -1);
+                int bound = (dir ? (axis ? shape.x() : shape.y()) : -1);
+                for(int current_idx = (axis ? idx_u.i() : idx_u.j()); current_idx != bound; current_idx += delta * 2)
+                    error->mult_error(axis ? Cs::PlanarIndex(current_idx + delta, idx_u.j()) : Cs::PlanarIndex(idx_u.i(), current_idx + delta), pauli);
+                dir = get_chain_direction(e_type, 1);
+                delta = (dir ? 1 : -1);
+                bound = (dir ? (axis ? shape.x() : shape.y()) : -1);
+                for(int current_idx = (axis ? idx_v.i() : idx_v.j()); current_idx != bound; current_idx += delta * 2)
+                    error->mult_error(axis ? Cs::PlanarIndex(current_idx + delta, idx_v.j()) : Cs::PlanarIndex(idx_v.i(), current_idx + delta), pauli);
+            }
         }
     }
     return error;
 }
 
+void show_syndrome_graph(std::shared_ptr<SyndromeGraph> syndrome_graph) {
+    auto& graph = syndrome_graph->graph;
+    auto& idx_lookup = syndrome_graph->index_lookup;
+    auto& edge_type = syndrome_graph->edge_type;
+    auto& weight = syndrome_graph->weight;
+    
+    int v = graph.GetNumVertices();
+    int e = graph.GetNumEdges();
 
+    printf("Number of vertex: %d\n", v);
+    for(int i = 0; i < v; i++) {
+        if(idx_lookup[i].virt)
+            printf("Vertex %4d | Virtual\n", i);
+        else
+            printf("Vertex %4d | i = %4d | j = %4d | t = %4d\n", i, idx_lookup[i].i(), idx_lookup[i].j(), idx_lookup[i].t());
+    }
+    printf("\n");
+
+    printf("Number of edge: %d\n", e);
+    for(int j = 0; j < e; j++) {
+        printf("Edge %4d | %4d %4d | weight = %8.2f | type = %d\n", j, graph.GetEdge(j).first, graph.GetEdge(j).second, weight[j], (int)edge_type[j]);
+    }
+    printf("\n");
+    printf("\n");
+}
 
 }

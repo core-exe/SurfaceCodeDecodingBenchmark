@@ -8,45 +8,48 @@
 
 namespace Decoder::Matching {
 
-enum class NodeType {
-    IN, ESX, ESZ, ETX, ETZ
+enum class EdgeType {
+    IN = 0,
+    TIME = 1,
+    SPACENN = 4,
+    SPACENP = 5,
+    SPACEPN = 6,
+    SPACEPP = 7
 };
 
-enum class Direction {
-    NEG, POS
-};
+inline bool get_chain_direction(EdgeType type, int vertex) {
+    // type: EdgeType, only valid for SPACEXX
+    // vertex: 0 for first, 1 for second
+    return (int)type & (1 << (1 - vertex));
+}
 
 class PlanarIndex3d{
     public:
     ErrorDynamics::CodeScheme::PlanarIndex index;
+    bool virt;
     int _t;
-    NodeType node_type;
-    Direction direction;
-    inline PlanarIndex3d(int i, int j, int __t): index(i, j), _t(__t) { node_type = NodeType::IN; }
-    inline PlanarIndex3d(NodeType _type, Direction _direction): index(0, 0), _t(0) { node_type = _type, direction = _direction; }
+    inline PlanarIndex3d(): index(0, 0), _t(0), virt(true) {}
+    inline PlanarIndex3d(int i, int j, int __t): index(i, j), _t(__t), virt(false) {}
     inline const int& i() { return index.i(); }
     inline const int& j() { return index.j(); }
     inline const int& t() { return _t; }
-    inline bool is_in() { return node_type == NodeType::IN; }
 };
 
-using distance_function = std::function<std::pair<bool, double>(PlanarIndex3d, PlanarIndex3d)>;
-using edge_distance_function = std::function<std::pair<int, double>(PlanarIndex3d)>;
+using distance_function = std::function<std::pair<EdgeType, double>(PlanarIndex3d, PlanarIndex3d)>;
 
 struct SyndromeGraph {
     MWPM::Graph graph;
     std::vector<PlanarIndex3d> index_lookup;
+    std::vector<EdgeType> edge_type;
     std::vector<double> weight;
-    inline SyndromeGraph(): graph(), index_lookup(), weight() {}
+    inline SyndromeGraph(): graph(), index_lookup(), edge_type(), weight() {}
 };
 
 std::shared_ptr<SyndromeGraph> get_graph(
     ErrorDynamics::PlanarData data,
     ErrorDynamics::CodeScheme::PlanarShape shape,
     bool measurement_error,
-    const distance_function& distance_func,
-    const edge_distance_function& edge_distance_func_space,
-    const edge_distance_function& edge_distance_func_time
+    const distance_function& distance_func
 );
 
 std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> matching_to_correction(
@@ -54,5 +57,7 @@ std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> matching_to_correction(
     ErrorDynamics::CodeScheme::PlanarShape shape,
     const std::list<int>& matching
 );
+
+void show_syndrome_graph(std::shared_ptr<SyndromeGraph> syndrome_graph);
 
 }

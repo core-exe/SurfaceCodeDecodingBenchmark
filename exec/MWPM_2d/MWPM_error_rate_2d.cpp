@@ -10,7 +10,7 @@
 #include <filesystem>
 #include <omp.h>
 
-#define NUM_THREAD 50
+#define NUM_THREAD 1
 #define BATCH_SIZE 1000
 
 using namespace std;
@@ -33,7 +33,7 @@ vector<int> test_batch(int d, double p_eff, int mode = 0) {
         error_model = static_pointer_cast<Err::ErrorModel::ErrorModelBase>(make_shared<Err::ErrorModel::IIDError>(p_independent,  pow(p_independent, 2.0), p_independent, 0));
     }
     auto code = Err::PlanarSurfaceCode(d, error_model);
-    auto decoder = Dc::Matching::StandardMWPMDecoder(p_eff, p_eff, p_eff, 0, false, code.get_shape());
+    auto decoder = Dc::Matching::StandardMWPMDecoder(p_eff, p_eff, p_eff, 0, false, 1, code.get_shape());
     
     for(int _ = 0; _ < BATCH_SIZE; _++) {
         code.step(1);
@@ -69,19 +69,19 @@ int main() {
     /*
     At d = 11, 10000 samples:
     p     | T      | p_L 
-    0.01  | 3.65s  | 0.0394
-    0.02  | 6.92s  | 0.2574
-    0.03  | 9.77s  | 0.4976
-    0.04  | 11.9s  | 0.6427
-    0.05  | 13.5s  | 0.7101
+    0.01  | 2.57s  | 0.0394
+    0.02  | 4.65s  | 0.2574
+    0.03  | 6.56s  | 0.4976
+    0.04  | 8.08s  | 0.6427
+    0.05  | 9.18s  | 0.7101
 
     At d = 27, 10000 samples:
     p     | T      | p_L 
-    0.01  | 59.5s  | 0.0032
-    0.02  | 217s   | 0.2379
-    0.03  | 416s   | 0.6294M
-    0.04  | 595s   | 0.7359
-    0.05  | 722s   | 0.7415
+    0.01  | 45.1s  | 0.0032
+    0.02  | 140s   | 0.2379
+    0.03  | 248s   | 0.6294
+    0.04  | 342s   | 0.7359
+    0.05  | 411s   | 0.7415
     */
 
 

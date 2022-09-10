@@ -10,7 +10,7 @@ namespace Dc = Decoder;
 
 int main() {
     int t_total = 1;
-    double p = 0.05;
+    double p = exp(-3.5);
     int d = 9;
     auto error_model_ptr = new Err::ErrorModel::IIDError(p, p, p, 0);
     shared_ptr<Err::ErrorModel::ErrorModelBase> error_model(error_model_ptr);
@@ -20,11 +20,11 @@ int main() {
     else {
         auto d_error = make_shared<Err::CodeScheme::PlanarError>(d);
         auto m_error = make_shared<Err::CodeScheme::PlanarSyndrome>(d);
-        d_error->mult_error(Err::CodeScheme::PlanarIndex(8, 2), Err::Util::Pauli::Y);
+        //d_error->mult_error(Err::CodeScheme::PlanarIndex(0, 4), Err::Util::Pauli::X);
         code.manual_step(d_error, m_error);
     }
 
-    auto decoder = Dc::Matching::StandardMWPMDecoder(p, p, p, 0, false, code.get_shape());
+    auto decoder = Dc::Matching::StandardMWPMDecoder(p, p, p, 0, false, 1, code.get_shape());
     auto data = code.get_data();
     cout << "Error: " << endl;
     cout << code.to_string(true, 1) << endl << endl;
