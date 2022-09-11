@@ -10,7 +10,7 @@
 #include <filesystem>
 #include <omp.h>
 
-#define NUM_THREAD 1
+#define NUM_THREAD 50
 #define BATCH_SIZE 1000
 
 using namespace std;
@@ -25,15 +25,16 @@ vector<int> test_batch(int d, double p_eff, int mode = 0) {
     mode = 1: independent X/Z error
     */
     auto ret = vector<int>(3, 0);
-    shared_ptr<Err::ErrorModel::ErrorModelBase> error_model;
-    if(mode == 0)
-        error_model = static_pointer_cast<Err::ErrorModel::ErrorModelBase>(make_shared<Err::ErrorModel::IIDError>(p_eff / 3, p_eff / 3, p_eff / 3, 0));
-    else if(mode == 1) {
-        double p_independent = sqrt(1 + p_eff) - 1;
-        error_model = static_pointer_cast<Err::ErrorModel::ErrorModelBase>(make_shared<Err::ErrorModel::IIDError>(p_independent,  pow(p_independent, 2.0), p_independent, 0));
+    double px, py, pz, pm;
+    if(mode == 0) {
+        px = p_eff / 3, py = p_eff / 3, pz = p_eff / 3, pm = 0;
+    } else if(mode == 1) {
+        double p_i = 1 - sqrt(1 - p_eff);
+        px = p_i * (1 - p_i), py = p_i * p_i, pz = p_i * (1 - p_i), pm = 0;
     }
+    auto error_model = make_shared<Err::ErrorModel::IIDError>(px, py, pz, pm);
     auto code = Err::PlanarSurfaceCode(d, error_model);
-    auto decoder = Dc::Matching::StandardMWPMDecoder(p_eff, p_eff, p_eff, 0, false, 1, code.get_shape());
+    auto decoder = Dc::Matching::StandardMWPMDecoder(px, py, pz, pm, false, 1, code.get_shape());
     
     for(int _ = 0; _ < BATCH_SIZE; _++) {
         code.step(1);
@@ -63,7 +64,7 @@ const vector<double> p_list = vector<double>({
     0.032, 0.034, 0.036, 0.038, 0.040,
     0.042, 0.044, 0.046, 0.048, 0.050
 });
-const int mode = 1;
+const int mode = 0;
 
 int main() {
     /*
@@ -88,9 +89,9 @@ int main() {
     auto path = std::filesystem::path(PROJECT_ROOT_PATH) / "exec/MWPM_2d/out/";
     string file_name;
     if(mode == 0) {
-        file_name = "MWPM_2d_out_balance_.txt";
+        file_name = "MWPM_2d_out_balance.txt";
     } else if(mode == 1) {
-        file_name = "MWPM_2d_out_independent_.txt";
+        file_name = "MWPM_2d_out_independent.txt";
     }
     ofstream file;
     file.open(path.append(file_name));

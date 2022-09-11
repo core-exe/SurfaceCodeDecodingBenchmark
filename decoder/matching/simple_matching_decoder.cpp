@@ -102,9 +102,13 @@ std::pair<EdgeType, double> StandardMWPMDecoder::distance_function(PlanarIndex3d
     ) ? 0 : 1);
     double space_weight = -(pauli == Err::Util::Pauli::X ? log_px : log_pz) * (length_space_chain_u + length_space_chain_v);
 
-    double in_weight_space = (abs(idx_a.i() - idx_b.i()) + abs(idx_a.j() - idx_b.j())) / 2 * -(pauli == Err::Util::Pauli::X ? log_px : log_pz);
+    int dx = abs(idx_a.i() - idx_b.i()) / 2;
+    int dy = abs(idx_a.j() - idx_b.j()) / 2;
+    int dt = abs(idx_a.t() - idx_b.t());
+    double in_weight_space = (dx + dy) * -(pauli == Err::Util::Pauli::X ? log_px : log_pz);
     double in_weight_time = (idx_a.t() == idx_b.t() ? 0 : (measurement_error ? abs(idx_a.t() - idx_b.t()) * (-log_pm) : INFINITY));
-    double in_weight = in_weight_space + in_weight_time;
+    double in_weight_degenerate = lgamma(dx + dy + dt + 1) - lgamma(dx + 1) - lgamma(dy + 1) - lgamma(dt + 1);
+    double in_weight = in_weight_space + in_weight_time + in_weight_degenerate;
 
     auto weight_vec = vector<double>({in_weight, time_weight, space_weight});
     int argmin = distance(weight_vec.begin(), min_element(weight_vec.begin(), weight_vec.end()));

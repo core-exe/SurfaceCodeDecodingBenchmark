@@ -10,8 +10,11 @@ target_link_libraries(demo_error_dynamics PUBLIC error_dynamics)
 add_executable(demo_syndrome_graph demo_syndrome_graph.cpp)
 target_link_libraries(demo_syndrome_graph PUBLIC error_dynamics decoder)
 
-add_executable(demo_MWPM_decoder demo_MWPM_decoder.cpp)
-target_link_libraries(demo_MWPM_decoder PUBLIC error_dynamics decoder)
+add_executable(demo_MWPM_decoder_2d demo_MWPM_decoder_2d.cpp)
+target_link_libraries(demo_MWPM_decoder_2d PUBLIC error_dynamics decoder)
+
+add_executable(demo_MWPM_decoder_3d demo_MWPM_decoder_3d.cpp)
+target_link_libraries(demo_MWPM_decoder_3d PUBLIC error_dynamics decoder)
 
 add_executable(demo_ml_decoder demo_ml_decoder.cpp)
 target_link_libraries(demo_ml_decoder PUBLIC error_dynamics decoder pybind11::embed)

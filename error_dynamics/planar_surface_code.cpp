@@ -41,9 +41,22 @@ void PlanarSurfaceCode::manual_step(std::shared_ptr<CodeScheme::PlanarError> dat
     scheme->add_data_error(data_error);
     scheme->add_syndrome_error(syndrome_error);
     last_error = scheme->data_error;
-    syndrome_change_list->push_back(scheme->get_syndrome()^last_syndrome);
+    syndrome_change_list->push_back(scheme->get_syndrome() ^ last_syndrome);
     last_syndrome = scheme->get_syndrome();
     scheme->clear_syndrome_error();
+    t++;
+}
+
+void PlanarSurfaceCode::apply_correction(std::shared_ptr<CodeScheme::PlanarError> correction) {
+    // a correction together with a perfect measurement
+    t = 0;
+    last_syndrome = std::make_shared<CodeScheme::PlanarSyndrome>(x, y);
+    syndrome_change_list = std::make_shared<std::vector<std::shared_ptr<CodeScheme::PlanarSyndrome>>>();
+    
+    scheme->add_data_error(correction);
+    last_error = scheme->data_error;
+    syndrome_change_list->push_back(scheme->get_syndrome() ^ last_syndrome);
+    last_syndrome = scheme->get_syndrome();
     t++;
 }
 

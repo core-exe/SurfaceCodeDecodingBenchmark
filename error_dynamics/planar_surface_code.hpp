@@ -27,9 +27,7 @@ class PlanarSurfaceCode {
     void reset();
     void step(int dt = 1);
     void manual_step(std::shared_ptr<CodeScheme::PlanarError> data_error, std::shared_ptr<CodeScheme::PlanarSyndrome> syndrome_error);
-    inline void apply_correction(std::shared_ptr<CodeScheme::PlanarError> correction) {
-        scheme->add_data_error(correction);
-    }
+    void apply_correction(std::shared_ptr<CodeScheme::PlanarError> correction);
     
     inline bool is_valid() const { return scheme->is_valid(); }
     bool is_correct() const { return scheme->is_correct(); }
