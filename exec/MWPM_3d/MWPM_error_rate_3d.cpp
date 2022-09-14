@@ -72,9 +72,9 @@ int main() {
     auto path = std::filesystem::path(PROJECT_ROOT_PATH) / "exec/MWPM_3d/out/";
     string file_name;
     if(mode == 0) {
-        file_name = "MWPM_3d_out_balance_.txt";
+        file_name = "MWPM_3d_out_balance.txt";
     } else if(mode == 1) {
-        file_name = "MWPM_3d_out_independent_.txt";
+        file_name = "MWPM_3d_out_independent.txt";
     }
     ofstream file;
     file.open(path.append(file_name));

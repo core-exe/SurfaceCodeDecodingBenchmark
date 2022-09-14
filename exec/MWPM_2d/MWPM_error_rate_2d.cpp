@@ -70,19 +70,19 @@ int main() {
     /*
     At d = 11, 10000 samples:
     p     | T      | p_L 
-    0.01  | 2.57s  | 0.0394
-    0.02  | 4.65s  | 0.2574
-    0.03  | 6.56s  | 0.4976
-    0.04  | 8.08s  | 0.6427
-    0.05  | 9.18s  | 0.7101
+    0.01  | 297ms  | 0.0394
+    0.02  | 591ms  | 0.2574
+    0.03  | 872ms  | 0.4976
+    0.04  | 1.08s  | 0.6427
+    0.05  | 1.24s  | 0.7101
 
     At d = 27, 10000 samples:
     p     | T      | p_L 
-    0.01  | 45.1s  | 0.0032
-    0.02  | 140s   | 0.2379
-    0.03  | 248s   | 0.6294
-    0.04  | 342s   | 0.7359
-    0.05  | 411s   | 0.7415
+    0.01  | 5.95s  | 0.0032
+    0.02  | 19.7s  | 0.2379
+    0.03  | 35.6s  | 0.6294
+    0.04  | 48.1s  | 0.7359
+    0.05  | 56.7s  | 0.7415
     */
 
 
@@ -121,6 +121,7 @@ int main() {
     const int repeat = N / BATCH_SIZE;
     for(auto d_it = d_list.begin(); d_it != d_list.end(); d_it++) {
         for(auto p_it = p_list.begin(); p_it != p_list.end(); p_it++) {
+            //chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
             vector<int> result = vector<int>(3, 0);
             #pragma omp parallel for shared(d_it, p_it, result) num_threads(NUM_THREAD)
             for(int _ = 0; _ < repeat; _++) {
@@ -130,6 +131,9 @@ int main() {
                 result[2] += batch_result[2];
             }
             file << *d_it << " " << *p_it << " " << result[0] << " " << result[1] << " " << result[2] << " " << endl;
+            //chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
+            //chrono::duration<double> time_span = chrono::duration_cast<chrono::duration<double>>(t2 - t1);
+            //std::cout << "d = " << *d_it << " p = " << *p_it << "\ttime spent: " << time_span.count() << "s" << endl;
         }
     }
     file.close();
