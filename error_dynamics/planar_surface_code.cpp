@@ -18,9 +18,10 @@ PlanarSurfaceCode::PlanarSurfaceCode(int _x, int _y, double p) : PlanarSurfaceCo
 PlanarSurfaceCode::PlanarSurfaceCode(int d, double p) : PlanarSurfaceCode::PlanarSurfaceCode(d, d, p) {}
 
 void PlanarSurfaceCode::reset() {
+    auto init_error = model->generate_planar_error(scheme->get_shape());
     t = 0;
     scheme = std::make_shared<CodeScheme::PlanarScheme>(x, y);
-    last_syndrome = std::make_shared<CodeScheme::PlanarSyndrome>(x, y);
+    last_syndrome = init_error.second;
     syndrome_change_list = std::make_shared<std::vector<std::shared_ptr<CodeScheme::PlanarSyndrome>>>();
 }
 
