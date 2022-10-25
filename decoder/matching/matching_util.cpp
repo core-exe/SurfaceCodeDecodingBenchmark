@@ -11,7 +11,8 @@ shared_ptr<SyndromeGraph> get_graph(
     ErrorDynamics::PlanarData data,
     ErrorDynamics::CodeScheme::PlanarShape shape,
     bool measurement_error,
-    const distance_function& distance_func
+    const distance_function& distance_func,
+    int graph_type
 ) {
     auto syndrome_graph = make_shared<SyndromeGraph>();
     auto syndromes = data.first;
@@ -21,65 +22,70 @@ shared_ptr<SyndromeGraph> get_graph(
     auto& idx_lookup = syndrome_graph->index_lookup;
     auto& edge_type = syndrome_graph->edge_type;
     auto& weight = syndrome_graph->weight;
-    
-    for(int i = 0; i < shape.x(); i += 2) {
-        for(int j = 1; j < shape.y(); j += 2) {
-            int t = 0;
-            for(auto p = syndromes->cbegin(); p != syndromes->cend(); t++, p++) {
-                if((*p)->get_symptom(Cs::PlanarIndex(i, j)) == Err::Util::Symptom::NEGATIVE) {
-                    idx_lookup.push_back(PlanarIndex3d(i, j, t));
-                    graph.AddVertex();
-                    for(int k = 0; k < vertex_count; k++) {
-                        auto edge_weight = distance_func(idx_lookup[k], PlanarIndex3d(i, j, t));
-                        graph.AddEdge(k, vertex_count);
-                        edge_type.push_back(edge_weight.first);
-                        weight.push_back(edge_weight.second);
+
+    if(graph_type & graph_z) {
+        for(int i = 0; i < shape.x(); i += 2) {
+            for(int j = 1; j < shape.y(); j += 2) {
+                int t = 0;
+                for(auto p = syndromes->cbegin(); p != syndromes->cend(); t++, p++) {
+                    if((*p)->get_symptom(Cs::PlanarIndex(i, j)) == Err::Util::Symptom::NEGATIVE) {
+                        idx_lookup.push_back(PlanarIndex3d(i, j, t));
+                        graph.AddVertex();
+                        for(int k = 0; k < vertex_count; k++) {
+                            auto edge_weight = distance_func(idx_lookup[k], PlanarIndex3d(i, j, t));
+                            graph.AddEdge(k, vertex_count);
+                            edge_type.push_back(edge_weight.first);
+                            weight.push_back(edge_weight.second);
+                        }
+                        vertex_count++;
                     }
-                    vertex_count++;
                 }
             }
         }
-    }
-    if(vertex_count % 2 == 1) {
-        idx_lookup.push_back(PlanarIndex3d());
-        graph.AddVertex();
-        for(int k = 0; k < vertex_count; k++) {
-            auto edge_weight = distance_func(idx_lookup[k], PlanarIndex3d());
-            graph.AddEdge(k, vertex_count);
-            edge_type.push_back(edge_weight.first);
-            weight.push_back(edge_weight.second);
+        if(vertex_count % 2 == 1) {
+            idx_lookup.push_back(PlanarIndex3d());
+            graph.AddVertex();
+            for(int k = 0; k < vertex_count; k++) {
+                auto edge_weight = distance_func(idx_lookup[k], PlanarIndex3d());
+                graph.AddEdge(k, vertex_count);
+                edge_type.push_back(edge_weight.first);
+                weight.push_back(edge_weight.second);
+            }
+            vertex_count++;
         }
-        vertex_count++;
     }
     int init_x_vertex = vertex_count;
-    for(int i = 1; i < shape.x(); i += 2) {
-        for(int j = 0; j < shape.y(); j += 2) {
-            int t = 0;
-            for(auto p = syndromes->cbegin(); p != syndromes->cend(); t++, p++) {
-                if((*p)->get_symptom(Cs::PlanarIndex(i, j)) == Err::Util::Symptom::NEGATIVE) {
-                    idx_lookup.push_back(PlanarIndex3d(i, j, t));
-                    graph.AddVertex();
-                    for(int k = init_x_vertex; k < vertex_count; k++) {
-                        auto edge_weight = distance_func(idx_lookup[k], PlanarIndex3d(i, j, t));
-                        graph.AddEdge(k, vertex_count);
-                        edge_type.push_back(edge_weight.first);
-                        weight.push_back(edge_weight.second);
+    
+    if(graph_type & graph_x) {
+        for(int i = 1; i < shape.x(); i += 2) {
+            for(int j = 0; j < shape.y(); j += 2) {
+                int t = 0;
+                for(auto p = syndromes->cbegin(); p != syndromes->cend(); t++, p++) {
+                    if((*p)->get_symptom(Cs::PlanarIndex(i, j)) == Err::Util::Symptom::NEGATIVE) {
+                        idx_lookup.push_back(PlanarIndex3d(i, j, t));
+                        graph.AddVertex();
+                        for(int k = init_x_vertex; k < vertex_count; k++) {
+                            auto edge_weight = distance_func(idx_lookup[k], PlanarIndex3d(i, j, t));
+                            graph.AddEdge(k, vertex_count);
+                            edge_type.push_back(edge_weight.first);
+                            weight.push_back(edge_weight.second);
+                        }
+                        vertex_count++;
                     }
-                    vertex_count++;
                 }
             }
         }
-    }
-    if(vertex_count % 2 == 1) {
-        idx_lookup.push_back(PlanarIndex3d());
-        graph.AddVertex();
-        for(int k = 0; k < vertex_count; k++) {
-            auto edge_weight = distance_func(idx_lookup[k], PlanarIndex3d());
-            graph.AddEdge(k, vertex_count);
-            edge_type.push_back(edge_weight.first);
-            weight.push_back(edge_weight.second);
+        if(vertex_count % 2 == 1) {
+            idx_lookup.push_back(PlanarIndex3d());
+            graph.AddVertex();
+            for(int k = 0; k < vertex_count; k++) {
+                auto edge_weight = distance_func(idx_lookup[k], PlanarIndex3d());
+                graph.AddEdge(k, vertex_count);
+                edge_type.push_back(edge_weight.first);
+                weight.push_back(edge_weight.second);
+            }
+            vertex_count++;
         }
-        vertex_count++;
     }
     return syndrome_graph;
 }

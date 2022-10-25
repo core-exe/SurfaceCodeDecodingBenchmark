@@ -18,3 +18,6 @@ target_link_libraries(demo_MWPM_decoder_3d PUBLIC error_dynamics decoder)
 
 add_executable(demo_ml_decoder demo_ml_decoder.cpp)
 target_link_libraries(demo_ml_decoder PUBLIC error_dynamics decoder pybind11::embed)
+
+add_executable(demo_iterated_decoder_2d demo_iterated_decoder_2d.cpp)
+target_link_libraries(demo_iterated_decoder_2d PUBLIC error_dynamics decoder)

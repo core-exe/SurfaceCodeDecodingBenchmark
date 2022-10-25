@@ -6,6 +6,8 @@ add_library(matching_decoder STATIC
     matching_decoder.hpp
     simple_matching_decoder.hpp
     simple_matching_decoder.cpp
+    iterated_decoder.hpp
+    iterated_decoder.cpp
 )
 
 target_link_libraries(matching_decoder PUBLIC

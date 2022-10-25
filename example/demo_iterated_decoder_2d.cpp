@@ -20,11 +20,11 @@ int main() {
     else {
         auto d_error = make_shared<Err::CodeScheme::PlanarError>(d);
         auto m_error = make_shared<Err::CodeScheme::PlanarSyndrome>(d);
-        //d_error->mult_error(Err::CodeScheme::PlanarIndex(0, 4), Err::Util::Pauli::X);
+        //d_error->mult_error(Err::CodeScheme::PlanarIndex(0, 0), Err::Util::Pauli::Y);
         code.manual_step(d_error, m_error);
     }
 
-    auto decoder = Dc::Matching::StandardMWPMDecoder(p, p, p, 0, false, 1, code.get_shape());
+    auto decoder = Dc::Matching::IteratedDecoder(p, p, p, 0, false, 2);
     auto data = code.get_data();
     cout << "Error: " << endl;
     cout << code.to_string(true, 1) << endl << endl;

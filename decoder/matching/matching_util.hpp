@@ -17,6 +17,9 @@ enum class EdgeType {
     SPACEPP = 7
 };
 
+const int graph_x = 1;
+const int graph_z = 2;
+
 inline bool get_chain_direction(EdgeType type, int vertex) {
     // type: EdgeType, only valid for SPACEXX
     // vertex: 0 for first, 1 for second
@@ -49,7 +52,8 @@ std::shared_ptr<SyndromeGraph> get_graph(
     ErrorDynamics::PlanarData data,
     ErrorDynamics::CodeScheme::PlanarShape shape,
     bool measurement_error,
-    const distance_function& distance_func
+    const distance_function& distance_func,
+    int graph_type = graph_x | graph_z
 );
 
 std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> matching_to_correction(
