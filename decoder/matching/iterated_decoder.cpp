@@ -66,8 +66,8 @@ std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> IteratedDecoder::operato
     */
     auto weight_x = std::vector<double>(shape.x() * shape.y() * (t_total + 1), 0.0);
     auto weight_z = std::vector<double>(shape.x() * shape.y() * (t_total + 1), 0.0);
-    auto matching_x = std::make_shared<std::list<int>>();
-    auto matching_z = std::make_shared<std::list<int>>();
+    auto matching_x = std::list<int>();
+    auto matching_z = std::list<int>();
 
     // update the edge weight FOR graph_*
     auto update_weight = [&, this](int graph_type, bool first = false)->void {
@@ -107,7 +107,7 @@ std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> IteratedDecoder::operato
             return lgamma(a + b + c + 1) - lgamma(a + 1) - lgamma(b + 1) - lgamma(c + 1);
         };
 
-        for(auto m_it = matching->begin(); m_it != matching->end(); m_it++) {
+        for(auto m_it = matching.begin(); m_it != matching.end(); m_it++) {
             auto edge = graph.GetEdge(*m_it);
             int u = edge.first, v = edge.second;
             auto idx_u = idx_lookup[u];
@@ -135,23 +135,23 @@ std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> IteratedDecoder::operato
                 int dx = (idx_v.i() - idx_u.i() > 0 ? 1 : -1);
                 int dy = (idx_v.j() - idx_u.j() > 0 ? 1 : -1);
                 int dt = (idx_v.t() - idx_u.t() > 0 ? 1 : -1);
-                int logn_total = log_multi_3(delta_x, delta_y, delta_t);
+                double logn_total = log_multi_3(delta_x, delta_y, delta_t);
                 for(int i = 0; i < delta_x + 2; i += 2) {
                     int from_i = idx_u.i() + i * dx;
                     for(int j = 0; j < delta_y + 2; j += 2) {
                         int from_j = idx_u.j() + j * dy;
-                        for(int t = 0; t < delta_t; t += 1) {
+                        for(int t = 0; t <= delta_t; t += 1) {
                             int from_t = idx_u.t() + t * dt;
                             double logn_from = log_multi_3(i, j, t);
                             if(i != delta_x) {
                                 double logn_tox = log_multi_3(delta_x - i - 1, delta_y - j, delta_t - t);
-                                double correction_coef_x = exp(logn_tox + logn_from - logn_total); // < 1
-                                weight_update[index(from_i + 1, from_j, from_t)] += correction_coef_x * delta_logp;
+                                double correction_coef_x = exp(logn_tox + logn_from - logn_total); // <= 1
+                                weight_update[index(from_i + dx, from_j, from_t)] += correction_coef_x * delta_logp;
                             }
                             if(j != delta_y) {
                                 double logn_toy = log_multi_3(delta_x - i, delta_y - j - 1, delta_t - t);
                                 double correction_coef_y = exp(logn_toy + logn_from - logn_total);
-                                weight_update[index(from_i, from_j + 1, from_t)] += correction_coef_y * delta_logp;
+                                weight_update[index(from_i, from_j + dy, from_t)] += correction_coef_y * delta_logp;
                             }
                         }
                     }
@@ -195,9 +195,9 @@ std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> IteratedDecoder::operato
         // to_vertex, space, time
         // for direction, 0 is negative direction, 1 is positive direction
         auto vv_distance = std::vector<std::vector<double>>(graph.GetNumVertices(), std::vector<double>(graph.GetNumVertices(), INFINITY));
-        auto vs_distance = std::vector<double>(graph.GetNumVertices(), 0);
+        auto vs_distance = std::vector<double>(graph.GetNumVertices(), INFINITY);
         auto vs_direction = std::vector<int>(graph.GetNumVertices(), 0);
-        auto vt_distance = std::vector<double>(graph.GetNumVertices(), 0);
+        auto vt_distance = std::vector<double>(graph.GetNumVertices(), INFINITY);
 
         enum class BoundaryType {
             IN,
@@ -217,51 +217,18 @@ std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> IteratedDecoder::operato
         struct Edge {
             int i, j, t;
             Vertex from, to;
+            double to_dist;
             Edge(){}
-            Edge(int _i, int _j, int _t, Vertex _from, Vertex _to) {
-                i = _i, j = _j, t = _t, from = _from, to = _to;
+            Edge(int _i, int _j, int _t, Vertex _from, Vertex _to, double _to_dist) {
+                i = _i, j = _j, t = _t, from = _from, to = _to, to_dist = _to_dist;
             }
         };
 
         auto cmp = [&](Edge a, Edge b)->bool {
-            return weight_ref[index(a.i, a.j, a.t)] > weight_ref[index(b.i, b.j, b.t)];
+            return a.to_dist >= b.to_dist;
         };
 
-        auto get_adj_edge = [&, this](Vertex v)->std::vector<Edge> {
-            const int adj_v_delta[6][3] = {
-                2, 0, 0,
-                0, 2, 0,
-                0, 0, 1,
-                -2, 0, 0,
-                0, -2, 0,
-                0, 0, -1
-            };
-            const int adj_e_delta[6][3] = {
-                1, 0, 0,
-                0, 1, 0,
-                0, 0, 1,
-                -1, 0, 0,
-                0, -1, 0,
-                0, 0, 0
-            };
-            int N = 6;
-            auto ret = std::vector<Edge>();
-            for(int n = 0; n < N; n++) {
-                int e_i = v.i + adj_e_delta[n][0];
-                int e_j = v.j + adj_e_delta[n][1];
-                int e_t = v.t + adj_e_delta[n][2];
-                if(e_i < 0 || e_i >= shape.x())
-                    continue;
-                if(e_j < 0 || e_j >= shape.y())
-                    continue;
-                if(e_t < 0 || e_t > t_total)
-                    continue;
-                if((e_i + e_j) % 2 == 1 && !this->measurement_error)
-                    continue;
-                ret.push_back(Edge(e_i, e_j, e_t, v, Vertex(v.i + adj_v_delta[n][0], v.j + adj_v_delta[n][1], v.t + adj_v_delta[n][2])));
-            }
-            return ret;
-        };
+        
         
         auto get_vertex_type = [&](Vertex v)->BoundaryType {
             if(v.i < 0 || v.j < 0)
@@ -278,6 +245,8 @@ std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> IteratedDecoder::operato
             if(v_idx.virt){
                 for(int v_to_id = 0; v_to_id < graph.GetNumVertices(); v_to_id++)
                     vv_distance[v_id][v_to_id] = INFINITY;
+                vs_distance[v_id] = 0;
+                vt_distance[v_id] = 0;
                 break;
             }
             auto edge_visited = std::vector<bool>(shape.x() * shape.y() * (t_total + 1), false);
@@ -286,9 +255,46 @@ std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> IteratedDecoder::operato
             bool space_bound_visited = false, time_bound_visited = false;
 
             Vertex first_vertex = Vertex(v_idx.i(), v_idx.j(), v_idx.t());
-            auto edge_heap = get_adj_edge(first_vertex);
             vertex_visited[index(first_vertex.i, first_vertex.j, first_vertex.t)] = true;
             vertex_dist[index(first_vertex.i, first_vertex.j, first_vertex.t)] = 0;
+
+            auto get_adj_edge = [&, this](Vertex v)->std::vector<Edge> {
+                const int adj_v_delta[6][3] = {
+                    2, 0, 0,
+                    0, 2, 0,
+                    0, 0, 1,
+                    -2, 0, 0,
+                    0, -2, 0,
+                    0, 0, -1
+                };
+                const int adj_e_delta[6][3] = {
+                    1, 0, 0,
+                    0, 1, 0,
+                    0, 0, 1,
+                    -1, 0, 0,
+                    0, -1, 0,
+                    0, 0, 0
+                };
+                int N = 6;
+                auto ret = std::vector<Edge>();
+                for(int n = 0; n < N; n++) {
+                    int e_i = v.i + adj_e_delta[n][0];
+                    int e_j = v.j + adj_e_delta[n][1];
+                    int e_t = v.t + adj_e_delta[n][2];
+                    if(e_i < 0 || e_i >= shape.x())
+                        continue;
+                    if(e_j < 0 || e_j >= shape.y())
+                        continue;
+                    if(e_t < 0 || e_t > t_total)
+                        continue;
+                    if((e_i + e_j) % 2 == 1 && !this->measurement_error)
+                        continue;
+                    ret.push_back(Edge(e_i, e_j, e_t, v, Vertex(v.i + adj_v_delta[n][0], v.j + adj_v_delta[n][1], v.t + adj_v_delta[n][2]), weight_ref[index(e_i, e_j, e_t)] + vertex_dist[index(v.i, v.j, v.t)]));
+                }
+                return ret;
+            };
+
+            auto edge_heap = get_adj_edge(first_vertex);
             for(auto e_it = edge_heap.cbegin(); e_it != edge_heap.cend(); e_it++) {
                 auto& e = *e_it;
                 edge_visited[index(e.i, e.j, e.t)] = true;
@@ -351,7 +357,8 @@ std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> IteratedDecoder::operato
             int dt = abs(idx_u.t() - idx_v.t());
 
             double weight_dist = vv_distance[u][v];
-            double weight_degen = lgamma(dx + dy + dt + 1) - lgamma(dx + 1) - lgamma(dy + 1) - lgamma(dt + 1);
+            double weight_degen = -(lgamma(dx + dy + dt + 1) - lgamma(dx + 1) - lgamma(dy + 1) - lgamma(dt + 1));
+            //double weight_degen = 0;
             double weight_in = weight_dist + weight_degen;
 
             double weight_space = vs_distance[u] + vs_distance[v];
@@ -370,22 +377,96 @@ std::shared_ptr<ErrorDynamics::CodeScheme::PlanarError> IteratedDecoder::operato
 
     };
 
+    auto show_graph = [&](int graph_type)->void {
+        auto& syndrome_graph = (graph_type == graph_x ? syndrome_graph_x : syndrome_graph_z);
+        auto& graph = syndrome_graph->graph;
+        auto& idx_lookup = syndrome_graph->index_lookup;
+        auto& edge_type = syndrome_graph->edge_type;
+        auto& weight = syndrome_graph->weight;
+
+        if(graph_type == graph_x)
+            printf("graph X:\n\n");
+        else
+            printf("graph Z:\n\n");
+        
+        printf("Vertex:\n");
+        for(int i = 0; i < graph.GetNumVertices(); i++) {
+            auto v_idx = idx_lookup[i];
+            if(v_idx.virt)
+                printf("%4d virtual\n", i);
+            else
+                printf("%4d i = %4d j = %4d t = %4d\n", i, v_idx.i(), v_idx.j(), v_idx.t());
+        }
+
+        printf("\nEdge:\n");
+        for(int i = 0; i < graph.GetNumEdges(); i++) {
+            auto edge = graph.GetEdge(i);
+            printf("%4d: %4d %4d, weight = %8.5f, type = %1d\n", i, edge.first, edge.second, weight[i], (int)edge_type[i]);
+        }
+    };
+    auto show_matching = [&](int graph_type)->void {
+        auto& syndrome_graph = (graph_type == graph_x ? syndrome_graph_x : syndrome_graph_z);
+        auto& graph = syndrome_graph->graph;
+        auto& edge_type = syndrome_graph->edge_type;
+        auto& weight = syndrome_graph->weight;
+        auto& matching = (graph_type == graph_x ? matching_x : matching_z);
+
+        if(graph_type == graph_x)
+            printf("matching X:\n\n");
+        else
+            printf("matching Z:\n\n");
+
+        double total_weight = 0;
+        for(auto e_it = matching.cbegin(); e_it != matching.cend(); e_it++) {
+            int e_id = *e_it;
+            auto edge = graph.GetEdge(e_id);
+            printf("%4d: %4d %4d, weight = %8.5f, type = %1d\n", e_id, edge.first, edge.second, weight[e_id], (int)edge_type[e_id]);
+            total_weight += weight[e_id];
+        }
+        printf("total weight: %.5f", total_weight);
+    };
+    auto show_weight = [&](int graph_type)->void {
+        auto& weight_ref = (graph_type == graph_x ? weight_x : weight_z);
+        if(graph_type == graph_x)
+            printf("weight X:\n\n");
+        else
+            printf("weight Z:\n\n");
+        printf("x = %3d, y = %3d, total t = %3d\n\n", shape.x(), shape.y(), t_total);
+
+        for(int t = 0; t < t_total + 1; t++) {
+            printf("t = %3d\n", t);
+            for(int i = 0; i < shape.x(); i++) {
+                for(int j = 0; j < shape.y(); j++) {
+                    printf("%5.2f   ", weight_ref[index(i, j, t)]);
+                }
+                printf("\n");
+            }
+            printf("\n");
+        }
+    };
+
     for(int current_iter = 0; current_iter < n_iter; current_iter++) {
         // update corrections for the this graph
         update_weight(current_graph, current_iter == 0 ? true : false);
+        //show_weight(current_graph);
+        //printf("\n\n");
         // compute new weight for the graph to match
         compute_weight(current_graph);
+        //show_graph(current_graph);
+        //printf("\n\n");
         // compute matching
         auto syndrome_graph = (current_graph == graph_x ? syndrome_graph_x : syndrome_graph_z);
         auto& current_matching = (current_graph == graph_x ? matching_x : matching_z);
         auto matching_algorithm = MWPM::Matching(syndrome_graph->graph);
-        current_matching = std::make_shared<std::list<int>>(matching_algorithm.SolveMinimumCostPerfectMatching(syndrome_graph->weight).first);
+        current_matching = matching_algorithm.SolveMinimumCostPerfectMatching(syndrome_graph->weight).first;
+        //show_matching(current_graph);
+        //printf("\n\n");
         // switch graph
         current_graph = (current_graph == graph_x ? graph_z : graph_x);
     }
 
-    auto correction_x = matching_to_correction(syndrome_graph_x, shape, *matching_x);
-    auto correction_z = matching_to_correction(syndrome_graph_z, shape, *matching_z);
+    auto correction_x = matching_to_correction(syndrome_graph_x, shape, matching_x);
+    auto correction_z = matching_to_correction(syndrome_graph_z, shape, matching_z);
     
     return correction_x * correction_z;
 }

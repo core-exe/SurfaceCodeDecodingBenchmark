@@ -107,7 +107,7 @@ std::pair<EdgeType, double> StandardMWPMDecoder::distance_function(PlanarIndex3d
     int dt = abs(idx_a.t() - idx_b.t());
     double in_weight_space = (dx + dy) * -(pauli == Err::Util::Pauli::X ? log_px : log_pz);
     double in_weight_time = (idx_a.t() == idx_b.t() ? 0 : (measurement_error ? abs(idx_a.t() - idx_b.t()) * (-log_pm) : INFINITY));
-    double in_weight_degenerate = lgamma(dx + dy + dt + 1) - lgamma(dx + 1) - lgamma(dy + 1) - lgamma(dt + 1);
+    double in_weight_degenerate = -(lgamma(dx + dy + dt + 1) - lgamma(dx + 1) - lgamma(dy + 1) - lgamma(dt + 1));
     double in_weight = in_weight_space + in_weight_time + in_weight_degenerate;
 
     auto weight_vec = vector<double>({in_weight, time_weight, space_weight});

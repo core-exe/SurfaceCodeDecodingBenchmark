@@ -10,8 +10,8 @@ namespace Dc = Decoder;
 
 int main() {
     int t_total = 1;
-    double p = exp(-3.5);
-    int d = 9;
+    double p = 0.001 * 8 / 3;
+    int d = 7;
     auto error_model_ptr = new Err::ErrorModel::IIDError(p, p, p, 0);
     shared_ptr<Err::ErrorModel::ErrorModelBase> error_model(error_model_ptr);
     auto code = Err::PlanarSurfaceCode(d, error_model);

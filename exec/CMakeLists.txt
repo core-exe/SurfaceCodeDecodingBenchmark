@@ -1,3 +1,4 @@
 add_subdirectory(MWPM_2d)
 add_subdirectory(MWPM_3d)
 add_subdirectory(TwoLevelML_2d)
+add_subdirectory(Iterated_2d)
